@@ -10,3 +10,14 @@
 *.lai
 *.la
 *.a
+
+
+*.config
+*.cproject
+*.project
+*.scons*
+*.creator*
+*.user*
+*.files
+*.includes
+main
