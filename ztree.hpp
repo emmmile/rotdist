@@ -8,7 +8,7 @@
 #include <boost/dynamic_bitset.hpp>
 using namespace std;
 using namespace boost;
-	
+using namespace tree;
 
 
 class ztree {

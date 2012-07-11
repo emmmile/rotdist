@@ -1,11 +1,11 @@
 
 #'-O3', '-march=i686', '-pipe', '-Wno-deprecated', '-msse2', '-mfpmath=sse', '-fomit-frame-pointer'
 
-env = Environment( CCFLAGS = ['-Wall', '-O2', '-march=i686', '-pipe', '-Wno-deprecated', '-msse2', '-mfpmath=sse', '-fomit-frame-pointer'], 
+env = Environment( CCFLAGS = ['-Wall', '-g', '-march=i686', '-pipe', '-Wno-deprecated', '-msse2', '-mfpmath=sse', '-fomit-frame-pointer'],
 		   LIBS=[],
 		   LIBPATH=[],
 		   CPPDEFINES=[],
-		   LINKFLAGS=['-s', '-Os'] )
+       LINKFLAGS=[] )
 
 
 env.Program( "main", ['main.cpp'] )

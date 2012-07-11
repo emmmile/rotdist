@@ -6,7 +6,7 @@
 
 using namespace std;
 
-
+namespace tree {
 
 
 template <class T>
@@ -92,6 +92,7 @@ public:
 	}
 };
 
+}
 
 #endif
 

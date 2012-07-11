@@ -11,95 +11,95 @@
 #include "ztree.hpp"
 #include "ptree.hpp"
 #include "utils.hpp"
-#include "treegraph.hpp"
+//#include "treegraph.hpp"
 using namespace std;
+using namespace tree;
 
 
 
 
 
+//// stampa il grafico n vs PTREE_OPERATION vs ZTREE_OPERATION
+//#define ROTATION_TEST	1
+//#define RANDOM_TEST	1
+//#define ASSIGN_TEST	1
+//void benchmark ( int n ) {
+//	int len = 1200000;
+//	ptree<int> z ( n );
+//	ztree t ( n );
+	
+//	//cout << sizeof( z ) << endl;
+//	//cout << z << endl;
+//	//z.to_root( 4 );
+//	//cout << z << endl;
+	
+//	printf( "%d ", n );
+//	#if ROTATION_TEST
+//	//cout << "Test rotazioni (ricerca inclusa) su alberi di " << n << " nodi.\n";
+//	//cout << len << " rotazioni casuali su un ptree<int>: ";
+//	cout.flush( );
+//	ttime( );
+//	for ( int i = 0; i < len; i++ )
+//		z.up( random() % n + 1 );
+	
+//	printf( "%.3lf ", ttime( ) );
+//	//cout << z << endl;
+	
+//	//cout << len << " rotazioni casuali su un ztree: ";
+//	cout.flush( );
+//	ttime( );
+//	for ( int i = 0; i < len; i++ )
+//		t.rotate( random() % n + 1 );
+	
+//	printf( "%.3lf\n", ttime( ) );
+//	//cout << z << endl;
+//	#endif
 
-// stampa il grafico n vs PTREE_OPERATION vs ZTREE_OPERATION
-#define ROTATION_TEST	1
-#define RANDOM_TEST	1
-#define ASSIGN_TEST	1
-void benchmark ( int n ) {
-	int len = 1200000;
-	ptree<int> z ( n );
-	ztree t ( n );
-	
-	//cout << sizeof( z ) << endl;
-	//cout << z << endl;
-	//z.to_root( 4 );
-	//cout << z << endl;
-	
-	printf( "%d ", n );
-	#if ROTATION_TEST
-	//cout << "Test rotazioni (ricerca inclusa) su alberi di " << n << " nodi.\n";
-	//cout << len << " rotazioni casuali su un ptree<int>: ";
-	cout.flush( );
-	ttime( );
-	for ( int i = 0; i < len; i++ )
-		z.up( random() % n + 1 );
-	
-	printf( "%.3lf ", ttime( ) );
-	//cout << z << endl;
-	
-	//cout << len << " rotazioni casuali su un ztree: ";
-	cout.flush( );
-	ttime( );
-	for ( int i = 0; i < len; i++ )
-		t.rotate( random() % n + 1 );
-	
-	printf( "%.3lf\n", ttime( ) );
-	//cout << z << endl;
-	#endif
-
-	#if RANDOM_TEST
-	//cout << "\nTest di generazione di alberi casuali di " << n << " nodi.\n";
-	//cout << ( len /= 10 ) << " generazioni casuali di ptree<int>: ";
-	cout.flush();
-	ttime( );
-	for ( int i = 0; i < len / 10; i++ )
-		ptree<int> z( n );
-	
-	
-	printf( "%.3lf ", ttime( ) );
+//	#if RANDOM_TEST
+//	//cout << "\nTest di generazione di alberi casuali di " << n << " nodi.\n";
+//	//cout << ( len /= 10 ) << " generazioni casuali di ptree<int>: ";
+//	cout.flush();
+//	ttime( );
+//	for ( int i = 0; i < len / 10; i++ )
+//		ptree<int> z( n );
 	
 	
-	//cout << len << " generazioni casuali di ztree: ";
-	cout.flush();
-	ttime( );
-	for ( int i = 0; i < len / 10; i++ )
-		ztree t( n );
+//	printf( "%.3lf ", ttime( ) );
 	
 	
-	printf( "%.3lf\n", ttime( ) );
-	#endif
-
-	#if ASSIGN_TEST
-	//cout << "\nTest di assegnamento di alberi di " << n << " nodi.\n";
-	//cout << ( len *= 10 ) << " assegnamenti di ptree<int>: ";
-	cout.flush();
+//	//cout << len << " generazioni casuali di ztree: ";
+//	cout.flush();
+//	ttime( );
+//	for ( int i = 0; i < len / 10; i++ )
+//		ztree t( n );
 	
-	ttime( );
-	ptree<int> zz( n );
-	for ( int i = 0; i < len; i++ )
-		zz = z;
 	
-	printf( "%.3lf ", ttime( ) );
+//	printf( "%.3lf\n", ttime( ) );
+//	#endif
+
+//	#if ASSIGN_TEST
+//	//cout << "\nTest di assegnamento di alberi di " << n << " nodi.\n";
+//	//cout << ( len *= 10 ) << " assegnamenti di ptree<int>: ";
+//	cout.flush();
 	
-	//cout << len << " assegnamenti di ztree: ";
-	cout.flush();
-	ttime( );
-	ztree tt( n );
-	for ( int i = 0; i < len; i++ )
-		tt = t;
+//	ttime( );
+//	ptree<int> zz( n );
+//	for ( int i = 0; i < len; i++ )
+//		zz = z;
 	
-	printf( "%.3lf %d\n", ttime( ), tt.bytes() );
+//	printf( "%.3lf ", ttime( ) );
 	
-	#endif
-}
+//	//cout << len << " assegnamenti di ztree: ";
+//	cout.flush();
+//	ttime( );
+//	ztree tt( n );
+//	for ( int i = 0; i < len; i++ )
+//		tt = t;
+	
+//	printf( "%.3lf %d\n", ttime( ), tt.bytes() );
+	
+//	#endif
+//}
 
 
 
@@ -110,181 +110,187 @@ void benchmark ( int n ) {
 
 
 
+///*
 
-
-// stampa i dati per il grafico n vs CENTRAL vs SIMPLIFY
-void test_rotation_algorithms ( int start, int n, int iterations, int step ) {
-	for ( int i = start; i <= n; i += step ) {
-		//double catalan = exp2( 2 * i ) / ( sqrt( M_PI * i ) * ( i + 1 ) );
-		//cout << (int) catalan << endl;
+//// stampa i dati per il grafico n vs CENTRAL vs SIMPLIFY
+//void test_rotation_algorithms ( int start, int n, int iterations, int step ) {
+//	for ( int i = start; i <= n; i += step ) {
+//		//double catalan = exp2( 2 * i ) / ( sqrt( M_PI * i ) * ( i + 1 ) );
+//		//cout << (int) catalan << endl;
 		
-		int simplify = 0;
-		int central = 0;
-		int centralp = 0;
-		for ( int j = iterations; j > 0; j-- ) {
-			ptree<int> zz ( i );
-			ptree<int> vv ( i );
-			ptree<int> zzz ( zz );
-			ptree<int> vvv ( vv );
-			ptree<int> zzzz ( zz );
-			ptree<int> vvvv ( vv );
+//		int simplify = 0;
+//		int central = 0;
+//		int centralp = 0;
+//		for ( int j = iterations; j > 0; j-- ) {
+//			ptree<int> zz ( i );
+//			ptree<int> vv ( i );
+//			ptree<int> zzz ( zz );
+//			ptree<int> vvv ( vv );
+//			ptree<int> zzzz ( zz );
+//			ptree<int> vvvv ( vv );
 			
 		
-			if ( !( zz == zzz ) || !( vv == vvv ) ) {
-				cout << "Operator = failed...\n";
-				exit( 1 );
-			}
+//			if ( !( zz == zzz ) || !( vv == vvv ) ) {
+//				cout << "Operator = failed...\n";
+//				exit( 1 );
+//			}
 		
-			//cout << "OPTIMAL, SIMPLIFY, CENTRAL > "; 
+//			//cout << "OPTIMAL, SIMPLIFY, CENTRAL > ";
 		
-			int simp = zz.simplify( vv );
-			simplify += simp;
+//			int simp = zz.simplify( vv );
+//			simplify += simp;
 		
-			int cent = zzz.central( vvv );
-			central += cent;
+//			int cent = zzz.central( vvv );
+//			central += cent;
 			
-			int cenp = zzzz.central_preprocessing( vvvv );
-			centralp += cenp;
+//			int cenp = zzzz.central_preprocessing( vvvv );
+//			centralp += cenp;
 		
-			if ( !( zz == vv ) ) {
-				cout << "SIMPLIFY failed...\n";
-				exit( 1 );
-			}
+//			if ( !( zz == vv ) ) {
+//				cout << "SIMPLIFY failed...\n";
+//				exit( 1 );
+//			}
 		
-			if ( !( zzz == vvv ) ) {
-				cout << "CENTRAL failed...\n";
-				exit( 1 );
-			}
-		}
+//			if ( !( zzz == vvv ) ) {
+//				cout << "CENTRAL failed...\n";
+//				exit( 1 );
+//			}
+//		}
 	
-		printf( "%d %d %d %d\n", i, simplify, central, centralp );
-		//cout << double( optimal ) << " " << double( simplify ) << " " << double( central ) / iterations << endl;
-	}
-}
+//		printf( "%d %d %d %d\n", i, simplify, central, centralp );
+//		//cout << double( optimal ) << " " << double( simplify ) << " " << double( central ) / iterations << endl;
+//	}
+//}
 
 
 
 
-// stampa il grafico n vs OPTIMAL vs CENTRAL vs SIMPLIFY
-void test_algorithms ( int start, int n, int iterations ) {
-	// STAMPA STATISTICHE
+//// stampa il grafico n vs OPTIMAL vs CENTRAL vs SIMPLIFY
+//void test_algorithms ( int start, int n, int iterations ) {
+//	// STAMPA STATISTICHE
 	
-	for ( int i = start; i <= n; i++ ) {
-		treegraph<> g( i );
-		int optimal = 0;
-		int simplify = 0;
-		int central = 0;
-		//cout << random( ) << endl;
-		for ( int j = iterations; j > 0; j-- ) {
-			ztree z	( i );
-			ztree v ( i );
-			ptree<int> zz ( z );
-			ptree<int> vv ( v );
-			ptree<int> zzz ( z );
-			ptree<int> vvv ( v );
+//	for ( int i = start; i <= n; i++ ) {
+//		treegraph<> g( i );
+//		int optimal = 0;
+//		int simplify = 0;
+//		int central = 0;
+//		//cout << random( ) << endl;
+//		for ( int j = iterations; j > 0; j-- ) {
+//			ztree z	( i );
+//			ztree v ( i );
+//			ptree<int> zz ( z );
+//			ptree<int> vv ( v );
+//			ptree<int> zzz ( z );
+//			ptree<int> vvv ( v );
 		
-			if ( !( zz == zzz ) || !( vv == vvv ) ) {
-				cout << "Operator = failed...\n";
-				exit( 1 );
-			}
+//			if ( !( zz == zzz ) || !( vv == vvv ) ) {
+//				cout << "Operator = failed...\n";
+//				exit( 1 );
+//			}
 		
-			//cout << "OPTIMAL, SIMPLIFY, CENTRAL > "; 
+//			//cout << "OPTIMAL, SIMPLIFY, CENTRAL > ";
 		
-			int tmp = 0;
-			tmp = g.distance( z, v );
-			optimal += tmp;
-			//int opt = tmp;
-			//cout << tmp << " / ";
+//			int tmp = 0;
+//			tmp = g.distance( z, v );
+//			optimal += tmp;
+//			//int opt = tmp;
+//			//cout << tmp << " / ";
 		
-			tmp = zz.simplify( vv );
-			simplify += tmp;
-			//cout << tmp << " / ";
-			///if ( tmp > ( 2 * i - 6 ) ) {
-			//	printf( "opt = %d, sim = %d, bound = %d\n", opt, tmp, 2 * i - 6 );
-			//	getchar();
-			//}
+//			tmp = zz.simplify( vv );
+//			simplify += tmp;
+//			//cout << tmp << " / ";
+//			///if ( tmp > ( 2 * i - 6 ) ) {
+//			//	printf( "opt = %d, sim = %d, bound = %d\n", opt, tmp, 2 * i - 6 );
+//			//	getchar();
+//			//}
 		
-			tmp = zzz.central_preprocessing( vvv );
-			central += tmp;
-			//cout << tmp << "\n";
+//			tmp = zzz.central_preprocessing( vvv );
+//			central += tmp;
+//			//cout << tmp << "\n";
 			
 			
 		
-			if ( !( zz == vv ) ) {
-				cout << "SIMPLIFY failed...\n";
-				exit( 1 );
-			}
+//			if ( !( zz == vv ) ) {
+//				cout << "SIMPLIFY failed...\n";
+//				exit( 1 );
+//			}
 		
-			if ( !( zzz == vvv ) ) {
-				cout << "CENTRAL failed...\n";
-				exit( 1 );
-			}
-		}
+//			if ( !( zzz == vvv ) ) {
+//				cout << "CENTRAL failed...\n";
+//				exit( 1 );
+//			}
+//		}
 	
-		printf( "%d %d %d %d\n", i, optimal, simplify, central );
-		//cout << double( optimal ) << " " << double( simplify ) << " " << double( central ) / iterations << endl;
-	}
-}
+//		printf( "%d %d %d %d\n", i, optimal, simplify, central );
+//		//cout << double( optimal ) << " " << double( simplify ) << " " << double( central ) / iterations << endl;
+//	}
+//}
 
 
 
 
 
 
-// stampa il grafico n vs OPTIMAL_COUNT vs GAP1_COUNT vs GAP2_COUNT vs TOTAL
-void test_simplify ( int start, int n, int iterations ) {
-	for ( int i = n; i >= start; i-- ) {
+//// stampa il grafico n vs OPTIMAL_COUNT vs GAP1_COUNT vs GAP2_COUNT vs TOTAL
+//void test_simplify ( int start, int n, int iterations ) {
+//	for ( int i = n; i >= start; i-- ) {
 		
-		map<int, int> sresults;
-		//map<int, int> oresults;
-		//treegraph<> g ( i );
-		for ( int j = iterations; j > 0; j-- ) {
-			//ztree z	( i );
-			//ztree v ( i );
-			ptree<int> zz ( i );
-			ptree<int> vv ( i );
+//		map<int, int> sresults;
+//		//map<int, int> oresults;
+//		//treegraph<> g ( i );
+//		for ( int j = iterations; j > 0; j-- ) {
+//			//ztree z	( i );
+//			//ztree v ( i );
+//			ptree<int> zz ( i );
+//			ptree<int> vv ( i );
 		
-			//int optimal = g.distance( z, v );
+//			//int optimal = g.distance( z, v );
 		
-			//oresults[ g.distance( z, v ) ]++;
-			sresults[ zz.central_preprocessing( vv ) ]++;
+//			//oresults[ g.distance( z, v ) ]++;
+//			sresults[ zz.central_preprocessing( vv ) ]++;
 			
-			if ( !( zz == vv ) ) {
-				cout << "SIMPLIFY failed...\n";
-				exit( 1 );
-			}
+//			if ( !( zz == vv ) ) {
+//				cout << "SIMPLIFY failed...\n";
+//				exit( 1 );
+//			}
 			
-			if ( iterations % 20 == 0 ) {
-				cout.flush();
-				cout << 100.0 - 100.0 * j / double( iterations ) << "%\r";
-			}
-		}
+//			if ( iterations % 20 == 0 ) {
+//				cout.flush();
+//				cout << 100.0 - 100.0 * j / double( iterations ) << "%\r";
+//			}
+//		}
 	
-		printf( "%d nodes:\n", i );
-		int limit = 2 * i - ( i <= 4 ? 4 : i <= 10 ? 5 : 6 );
-		for ( int j = 0; j <= limit; j++ )
-			printf( "%d %d\n", j, sresults[j] / 10 );
-		//cout << double( optimal ) << " " << double( simplify ) << " " << double( central ) / iterations << endl;
-	}
-}
+//		printf( "%d nodes:\n", i );
+//		int limit = 2 * i - ( i <= 4 ? 4 : i <= 10 ? 5 : 6 );
+//		for ( int j = 0; j <= limit; j++ )
+//			printf( "%d %d\n", j, sresults[j] / 10 );
+//		//cout << double( optimal ) << " " << double( simplify ) << " " << double( central ) / iterations << endl;
+//	}
+//}
 
-
+//*/
 
 
 int main ( int argv, char** argc ) {
 	if ( argv < 2 || atoi( argc[1] ) <= 0 ) return 1;
 	int n = atoi( argc[1] );
 
-	/*ztree a ( "1101001011000", 6 );
-	ztree b ( "1010111010000", 6 );
 
-	ptree<int> aa ( a );
-	ptree<int> bb ( b );
-	cout << aa.mix( bb ) << endl;*/
-	
+	for ( int i = 0; i < 1000; i++ ) {
+		ptree<int> aa ( n );
+		ptree<int> bb ( n );
+
+		cout << aa.simplify( bb ) << endl;
+
+		//cout << aa << endl;
+		//cout << bb << endl;
+
+		if ( aa != bb )
+			cout << "DEVI MORI'.\n" << endl;
+	}
 
 	
-	treegraph<> g ( n );
+	/*treegraph<> g ( n );
 
 	for ( int i = 0; i < 100000; i++ ) {
 		ztree a ( n );
@@ -307,7 +313,7 @@ int main ( int argv, char** argc ) {
 #endif
 	}
 	
-	
+	*/
 
 	
 
