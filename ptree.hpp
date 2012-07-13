@@ -9,6 +9,7 @@
 #include "node.hpp"
 #include "ztree.hpp"
 #include "utils.hpp"
+#include "equivalence.hpp"
 using namespace std;
 
 namespace tree {
@@ -16,14 +17,8 @@ namespace tree {
 
 enum rotation_type { LEFT, RIGHT };
 
-#define DEBUG 1
-
-
-
 template <class T = unsigned int>
 class ptree {
-	
-
 private:
 	node<T>* nodes;		// base dell'array
 	bool allocated;
@@ -33,7 +28,8 @@ private:
 	T root;			// indice del nodo radice
 	T minvalue;
 	T maxvalue;
-	
+
+
 	
 	// costruttore di copia, crea un albero da un array di nodi gia' presente, 
 	// XXX da non usare verso l'esterno! Serve per poter trattare i sottoalberi 
@@ -124,8 +120,66 @@ private:
 		// a seconda se u era attaccato come nodo destro o sinistro
 		if ( f && f->left()  == value ) f->set_left ( u->father() );
 		if ( f && f->right() == value )	f->set_right( u->father() );
-	}
+  }
+
+
+  void findBoundaries ( T value, int x, int y, int* edges, int& xmin, int& xmax, int& ymax ) {
+
+    if ( x < xmin ) xmin = x;
+    if ( x > xmax ) xmax = x;
+    if ( y > ymax ) ymax = y;
+
+    T l = nodes[value].left();
+    T r = nodes[value].right();
+    if ( l )
+      findBoundaries( l, x - edges[l] - 1, y + edges[l] + 1, edges, xmin, xmax, ymax );
+    if ( r )
+      findBoundaries( r, x + edges[r] + 1, y + edges[r] + 1, edges, xmin, xmax, ymax );
+  }
+
+  void printTree ( T value, int x, int y, int* edges, char* buffer, int rowlen ) {
+    T l = nodes[value].left();
+    T r = nodes[value].right();
+
+    buffer[x + rowlen * y] = value + '0';
+    if ( l ) {
+      for ( int i = 0; i < edges[l]; ++i )
+        buffer[(x - i - 1) + rowlen * (y + i + 1)] = '/';
+
+      printTree( l, x - edges[l] - 1, y + edges[l] + 1, edges, buffer, rowlen );
+    }
+    if ( r ) {
+      for ( int i = 0; i < edges[r]; ++i )
+         buffer[(x + i + 1) + rowlen * (y + i + 1)] = '\\';
+
+      printTree( r, x + edges[r] + 1, y + edges[r] + 1, edges, buffer, rowlen );
+    }
+  }
+
+
 public:
+
+  void print ( ostream& stream ) {
+    int xmin = 0;
+    int xmax = 0;
+    int ymax = 0;
+    int edges[size + 1];
+    fill( edges, edges + size + 1, 1 );
+    findBoundaries( root, 0, 0, edges, xmin, xmax, ymax );
+
+    //printf( "%d %d %d\n", xmin, xmax, ymax );
+    int rowlen = xmax - xmin + 2; // +1 also for the \n
+    int size = rowlen * (ymax + 1);
+    char buffer [size];
+    fill( buffer, buffer + size, ' ' );
+    for ( int y = 1; y <= ymax; ++y )
+      buffer[rowlen * y - 1] = '\n';
+      buffer[size - 1] = '\0';
+
+    printTree( root, -xmin, 0, edges, buffer, rowlen );
+    stream << buffer;
+  }
+
 	// utile per poter utilizzare il tipo di nodo anche dall'esterno
 	typedef T node_type;
 	// tipo di utilita', utile per gestire gli intervalli
@@ -215,7 +269,7 @@ public:
 	
 	bool operator == ( const ptree<T>& x ) const {
 		bool out = ( x.size == size ) && ( x.root == root )
-			   && ( x.minvalue == minvalue) && ( x.maxvalue == maxvalue );
+         && ( x.minvalue == minvalue) && ( x.maxvalue == maxvalue );
 		
 		
 		for ( T i = minvalue; i <= maxvalue && out; ++i )
@@ -239,63 +293,26 @@ public:
 		
 		// sono uguali
 		return false;
-	}
-	
-//	// copia x dentro *this, eliminando il contenuto precedente
-//	ptree<T>& operator = ( const ptree<T>& x ) {
-//		return ptree<T>( x );
-//		// caso in cui x == this, non devo deallocare niente.
-//		// semplicamente assegno le altre variabili
-//		if ( allocated && x.nodes == nodes ) {
-//			size = x.size;
-//			root = x.root;
-//			return *this;
-//		}
+  }
 
+
+	// stampa l'albero sullo stream dato
+  friend ostream& operator << ( ostream& stream, const ptree<T>& t ) {
+    print_tree( stream, t.nodes + t.root, t.nodes );
+		return stream;
+  }
+
+	
+//	// Conversione da ptree a ztree.. assai inefficiente, si puo' migliorare!
+//	static ztree to_sequence ( const ptree<T>& x ) {
+//		if ( x.size == 0 ) return ztree( );
 		
-//		// caso in cui x != this e le dimensioni sono diverse, qui devo riallocare
-//		if ( allocated && x.size != size ) {
-//			delete[] nodes;
-//			nodes = new node<T> [ x.size + 1 ];
-//			memset( nodes, 0, sizeof( node<T> ) * ( x.size + 1 ) );
-//		}
-		
-//		// infine copio x
-//		allocated = true;
-//		copy( x );
-//		return *this;
+//		return ztree( to_sequence( x.left() ), to_sequence( x.right() ) );
 //	}
 	
-	// porta su il nodo value di una posizione
-	ptree<T>& operator ^ ( const T value ) {
-		up( value );
-		return *this;
-	}
-	
-	// stampa l'albero sullo stream dato
-	friend ostream& operator << ( ostream& stream, const ptree<T>& t ) {
-		print_tree( stream, t.nodes + t.root, t.nodes );
-		return stream;
-	}
-	
-	string to_str ( T* eqinfo = NULL ) const {
-		ostringstream stream;
-		print_tree( stream, this->nodes + this->root, this->nodes, eqinfo );
-		return stream.str();
-	}
-	
-
-	
-	// Conversione da ptree a ztree.. assai inefficiente, si puo' migliorare!
-	static ztree to_sequence ( const ptree<T>& x ) {
-		if ( x.size == 0 ) return ztree( );
-		
-		return ztree( to_sequence( x.left() ), to_sequence( x.right() ) );
-	}
-	
-	ztree to_sequence ( ) const {
-		return to_sequence ( *this );
-	}
+//	ztree to_sequence ( ) const {
+//		return to_sequence ( *this );
+//	}
 	
 	
 	
@@ -344,23 +361,23 @@ public:
 	}
 	
 	// ometto i controlli tanto verranno chiamate o da c() o da to_leaf
-	T phi ( const T x, T* eqinfo = NULL ) const {
+	T phi ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
 		T total = 0;
 		
 		// conto i nodi nel sottobraccio di sinistra
 		for ( T j = locate( x )->left(); j != EMPTY; j = locate( j )->right() ) {
-			if ( eqinfo && eqinfo[j] != EMPTY ) break;
+			if ( eqinfo && (*eqinfo)[j] != EMPTY ) break;
 			total++;
 		}
 		
 		return total;
 	}
 	
-	T gamma ( const T x, T* eqinfo = NULL ) const {
+	T gamma ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
 		T total = 0;
 	
 		for ( T j = locate( x )->right(); j != EMPTY; j = locate( j )->left() ) {
-			if ( eqinfo && eqinfo[j] != EMPTY ) break;
+			if ( eqinfo && (*eqinfo)[j] != EMPTY ) break;
 			total++;
 		}
 		
@@ -371,7 +388,7 @@ public:
 	// restituisce -1 in caso l'indice non sia valido (non dovrebbe mai verificarsi!)
 	// Nell'array eqinfo sono contenute le informazioni a riguardo i nodi omologhi, 
 	// se e' != NULL va considerato.
-	T c ( const T x, T* eqinfo = NULL ) const {
+	T c ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
 		if ( ! valid( x ) ) {
 			cerr << "c(): invalid value " << x << ".\n";
 			return -1;
@@ -389,7 +406,7 @@ public:
 	}
 
 	// calcola r(x), la distanza dalla radice
-	T r ( const T x, T* eqinfo = NULL ) const {
+	T r ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
 		if ( ! valid( x ) ) {
 			cerr << "c(): invalid value " << x << ".\n";
 			return -1;
@@ -400,7 +417,7 @@ public:
 
 		// conto i nodi per arrivare alla radice
 		do {
-			if ( eqinfo && eqinfo[j] != EMPTY ) break;
+			if ( eqinfo && (*eqinfo)[j] != EMPTY ) break;
 			if ( locate( j )->father() == EMPTY ) break;
 			total++;
 
@@ -412,7 +429,7 @@ public:
 	
 	// funzione usata da simplify per portare il nodo x ad essere una foglia, 
 	// eseguendo c(x) rotazioni.
-	T to_leaf ( const T x, T* eqinfo = NULL ) { 
+  T to_leaf ( const T x, equivalence_info<T>* eqinfo = NULL ) {
 		if ( ! valid( x ) ) {
 			cerr << "to_leaf(): invalid value " << x << ".\n";
 			return -1;
@@ -453,9 +470,7 @@ public:
 	// Gli indici rappresentano i nodi in *this, mentre il contenuto l'eventuale nodo in s 
 	// che e' omologo (EMPTY altrimenti). XXX considera un solo array, riferito a *this, 
 	// se serve anche quello riferito a s, seqinfo allore e' != NULL.
-	bool equal_subtrees ( ptree<T>& s, T* eqinfo, T* seqinfo, couple* intt, couple* ints ) {
-		memset( eqinfo, EMPTY, ( size + 1 ) * sizeof( T ) );
-		memset( seqinfo, EMPTY, ( size + 1 ) * sizeof( T ) );
+  bool equal_subtrees ( ptree<T>& s, equivalence_info<T>* eqinfo, couple* intt, couple* ints ) {
 
 		memset( intt, EMPTY, ( size + 1 ) * sizeof( couple ) );
 		memset( ints, EMPTY, ( size + 1 ) * sizeof( couple ) );
@@ -480,8 +495,8 @@ public:
 			if ( i == root ) continue;
 			
 			if ( ints[i] == intt[i] ) {
-				eqinfo[i] = i;
-				if ( seqinfo ) seqinfo[i] = i;
+				eqinfo->set(i, i); //eqinfo[i] = i;
+				//if ( seqinfo ) seqinfo[i] = i;
 				continue;
 			}
 			
@@ -489,8 +504,8 @@ public:
 				T y = locate( ints[i].first - 1 )->right();
 				// puo' succedere che y sia EMPTY!
 				if ( y != EMPTY && intt[y] == ints[i] ) {
-					eqinfo[y] = i;
-					if ( seqinfo ) seqinfo[i] = y;
+					eqinfo->set(y,i);//eqinfo[y] = i;
+					//if ( seqinfo ) seqinfo[i] = y;
 				}
 			}
 			
@@ -498,8 +513,8 @@ public:
 				T y = locate( ints[i].second + 1 )->left();
 				
 				if ( y != EMPTY && intt[y] == ints[i] ) {
-					eqinfo[y] = i;
-					if ( seqinfo ) seqinfo[i] = y;
+					eqinfo->set(y,i);//eqinfo[y] = i;
+					//if ( seqinfo ) seqinfo[i] = y;
 				}
 			}
 		}
@@ -512,7 +527,7 @@ public:
 	// un prerequisito fondamentale e' che questa funzione venga chiamata su (sotto) alberi equivalenti
 	// e che negli array info siano presenti le informazioni sugli altri alberi equivalenti contenuti:
 	// in sostanze *this e s devono avere gli stessi nodi NON omologhi. Non faccio controlli a riguardo.
-	T min_non_homologue ( ptree<T>& s, T* eqinfo, T* seqinfo, T value, T& cval ) {
+  T min_non_homologue ( ptree<T>& s, equivalence_info<T>* eqinfo, equivalence_info<T>* seqinfo, T value, T& cval ) {
 		// calcolo il c sul nodo corrente
 		cval = c( value, eqinfo ) + s.c( value, seqinfo );
 
@@ -526,7 +541,7 @@ public:
 		// guardo a sinistra quanto e' il minimo dei c(x)
 		T x = locate( value )->left();
 		// se il nodo sinistro e' non vuoto e non e' un nodo equivalente, mi calcolo c(x) minimo a sinistra
-		if ( x != EMPTY && eqinfo[x] == EMPTY )
+		if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
 			temp_value = min_non_homologue( s, eqinfo, seqinfo, x, temp_cx );
 		
 		// se tale valore e' minore di quello corrente, salvo i dati
@@ -538,7 +553,7 @@ public:
 	
 		// allo stesso modo guardo se ha destra posso migliorare il c(x)
 		x = locate( value )->right();
-		if ( x != EMPTY && eqinfo[x] == EMPTY )
+		if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
 			temp_value = min_non_homologue( s, eqinfo, seqinfo, x, temp_cx );
 		
 		if ( temp_cx < cval ) {
@@ -551,13 +566,13 @@ public:
 	
 	// processing di SIMPLIFY: rende identici s e *this, rendendo foglia mano mano i nodi che restano.
 	// se non_trivial != NULL viene 1 se sono state fatte scelte non banali (con c(x) > 1)
-	T process ( ptree<T>& s, T* eqinfo, T* seqinfo, bool* non_trivial = NULL ) {
+  T process ( ptree<T>& s, equivalence_info<T>* eqinfo, equivalence_info<T>* seqinfo, bool* non_trivial = NULL ) {
 		T total = 0;
 		
 		
 		T selected = EMPTY, cx;
 		do {
-			selected = min_non_homologue( s, eqinfo, seqinfo, root, cx );
+      selected = min_non_homologue( s, eqinfo, seqinfo, root, cx );
 			if ( selected == root && cx == 0 ) break;
 			//printf( "Selected node %d with c = %d.\n", selected, cx );
 			
@@ -581,13 +596,13 @@ public:
 			// esserci anche altri nodi equivalenti, ma verranno determinati dalla
 			// min_non_homologue(), ovvero verranno selezionati per primi gli eventuali nodi x
 			// con c(x) pari a 0
-			eqinfo[selected] = selected;
-			seqinfo[selected] = selected;
+      eqinfo->set(selected, selected); //eqinfo[selected] = selected;
+			//seqinfo[selected] = selected;
 		} while ( true );
 		
 		// le radici non sono state settate come equivalenti
-		eqinfo[root] = root;
-		seqinfo[root] = root;
+    eqinfo->set(root, root);//eqinfo[root] = root;
+		//seqinfo[root] = root;
 		return total;
 	}
 	
@@ -599,34 +614,36 @@ public:
 		}
 
 		T total = 0;
-		T eqinfo [ size + 1 ];
-		T seqinfo [ size + 1 ];	// serve per calcolare il c(x) indipendentemente anche sul secondo albero
+    equivalence_info<T> eqinfo( size );
+    equivalence_info<T> seqinfo = eqinfo.inverse();
+		//T eqinfo [ size + 1 ];
+		//T seqinfo [ size + 1 ];	// serve per calcolare il c(x) indipendentemente anche sul secondo albero
 		
 		couple ints [ size + 1 ];
 		couple intt [ size + 1 ];
 
 		// 1. Preprocessing, cerca eventuali sottoalberi gia' equivalenti
-		equal_subtrees( s, eqinfo, seqinfo, intt, ints );
+    equal_subtrees( s, &eqinfo, intt, ints );
 		
 		// se mi interessa sapere quante volte il cx > 1, setto non_trivial a false
 		if ( non_trivial ) *non_trivial = false;
 		
 		// 2. Su ogni sottoalbero equivalente esegue il processing
 		for ( T i = minvalue; i <= maxvalue; ++i ) {
-			if ( eqinfo[i] == EMPTY ) continue;
+      if ( eqinfo[i] == EMPTY ) continue;
 //			cout << "sottoalbero " << i << endl;
 //			cout << "equivalente a " << eqinfo[i] << endl;
 			
 			// per ogni coppia di nodi equivalenti prendo i sottoalberi
 			ptree<T> tt( subtree( i ), false );
-			ptree<T> ss( s.subtree( eqinfo[i] ), false );
+      ptree<T> ss( s.subtree( eqinfo[i] ), false );
 			
 
 //			cout << *this << endl;
 //			cout << s << endl;
 
 			// eseguo il processing
-			total += tt.process( ss, eqinfo, seqinfo, non_trivial );
+      total += tt.process( ss, &eqinfo, &seqinfo, non_trivial );
 
 //			cout << tt.nodes[tt.root] << endl;
 //			cout << this->nodes[tt.root] << endl;
@@ -637,7 +654,7 @@ public:
 		}
 		
 		// 3. Sui nodi non omologhi rimasti nell'albero corrente, esegue il processing
-		total += process( s, eqinfo, seqinfo, non_trivial );
+		total += process( s, &eqinfo, &seqinfo, non_trivial );
 		
 		return total;
 	}
@@ -980,6 +997,7 @@ public:
 //		return x.mix( y );
 //	}
 };
+
 
 }
 

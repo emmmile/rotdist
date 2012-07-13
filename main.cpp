@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <algorithm>
+#include <boost/bimap.hpp>
 
 #include "ztree.hpp"
 #include "ptree.hpp"
@@ -275,18 +276,18 @@ int main ( int argv, char** argc ) {
 	if ( argv < 2 || atoi( argc[1] ) <= 0 ) return 1;
 	int n = atoi( argc[1] );
 
+//	cout << sizeof( bimap<int,int> ) << endl;
 
-	for ( int i = 0; i < 1000; i++ ) {
+  for ( int i = 0; i < 10; i++ ) {
 		ptree<int> aa ( n );
 		ptree<int> bb ( n );
+    aa.print( cout );
+    cout << endl << endl;
 
-		cout << aa.simplify( bb ) << endl;
+    //cout << aa.simplify( bb ) << endl;
 
-		//cout << aa << endl;
-		//cout << bb << endl;
-
-		if ( aa != bb )
-			cout << "DEVI MORI'.\n" << endl;
+    //cout << aa << endl;
+    //cout << bb << endl;
 	}
 
 	
