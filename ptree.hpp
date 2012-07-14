@@ -9,7 +9,7 @@
 #include "print.hpp"
 #include "node.hpp"
 #include "ztree.hpp"
-#include "utils.hpp"
+#include "node_set.hpp"
 #include "equivalence.hpp"
 using namespace std;
 
@@ -496,7 +496,9 @@ public:
     cout << s.to_str( &seqinfo ) << endl;
     getchar();
 		
+    node_set<T> equivalent( eqinfo );
     // 2. Su ogni sottoalbero equivalente esegue il processing
+    //for ( node_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
     for ( T i = nodes[root].minvalue; i <= nodes[root].maxvalue; ++i ) {
       if ( eqinfo[i] == EMPTY ) continue;
 			

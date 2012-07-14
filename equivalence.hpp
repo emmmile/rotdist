@@ -13,6 +13,7 @@ private:
 	T* info;
 	T* inv;
 	bool allocated;
+  T _size;
 
 	equivalence_info( T* a, T* b ) {
 		this->info = a;
@@ -27,6 +28,7 @@ public:
 		fill( info, info + size + 1, EMPTY );
 		fill( inv, inv + size + 1, EMPTY );
 		allocated = true;
+    this->_size = size;
 	}
 
 	~equivalence_info ( ) {
@@ -44,6 +46,10 @@ public:
 		inv[b] = a;
 		return b;
 	}
+
+  T size() const {
+    return _size;
+  }
 
 	inline equivalence_info inverse ( ) {
 		return equivalence_info( inv, info );

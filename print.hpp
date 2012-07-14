@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <ostream>
 #include "node.hpp"
-#include "utils.hpp"
 #include "ptree.hpp"
 #include "equivalence.hpp"
 
