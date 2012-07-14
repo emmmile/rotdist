@@ -37,7 +37,7 @@ private:
 	// restituisco la posizione del padre del nodo pos
 	unsigned int father ( unsigned int pos ) const {
 		if ( pos >= tree.size() )
-			return string::npos;
+      return -1;//string::npos;
 
 		unsigned int z;
 		unsigned int o;
@@ -53,7 +53,7 @@ private:
 	// restituisco la fine del primo sottoalbero che parte da pos
 	unsigned int first_subtree ( unsigned int pos ) const {
 		if ( pos >= tree.size() )
-			return string::npos;
+      return -1;//string::npos;
 		
 		unsigned int z;
 		unsigned int o;

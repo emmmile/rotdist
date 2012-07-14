@@ -16,8 +16,11 @@ private:
 	T ls;	// valore a sinitra
 	T rs;	// valore a destra
 	T fa;	// valore del padre
+
 public:
 
+  T minvalue;
+  T maxvalue;
 	node ( ) {
 
 	}
@@ -58,11 +61,13 @@ public:
 		rs = value;
 	}
 
-	T set ( T v, T l, T r, T f ) {
+  T set ( T v, T l, T r, T f, T minv, T maxv ) {
 		val = v;
 		ls = l;
 		rs = r;
 		fa = f;
+    minvalue = minv;
+    maxvalue = maxv;
 		return val;
 	}
 
@@ -87,8 +92,9 @@ public:
 	}
 
 	friend ostream& operator << ( ostream& s, const node<T>& t ) {
-		s << "value = " << t.val << ": [l = " << t.ls << "], [r = " << t.rs << "], [f = " << t.fa << "]";
-		return s;
+    s << "value = " << t.val << ": [l = " << t.ls << ", r = " << t.rs << ", f = " << t.fa << "]";
+    s << "  minvalue = " << t.minvalue << ", maxvalue = " << t.maxvalue;
+    return s;
 	}
 };
 

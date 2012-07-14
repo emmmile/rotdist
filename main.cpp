@@ -278,18 +278,20 @@ int main ( int argv, char** argc ) {
 
 //	cout << sizeof( bimap<int,int> ) << endl;
 
-  for ( int i = 0; i < 10; i++ ) {
+  for ( int i = 0; i < 1000; i++ ) {
 		ptree<int> aa ( n );
-		ptree<int> bb ( n );
-    aa.print( cout );
-    cout << endl << endl;
+    ptree<int> bb ( n );
+    cout << "==================================\n";
 
-    //cout << aa.simplify( bb ) << endl;
 
-    //cout << aa << endl;
-    //cout << bb << endl;
-	}
+    aa.simplify( bb );
 
+    if ( aa != bb ) {
+      cout << aa << endl;
+      cout << bb << endl;
+      getchar();
+    }
+  }
 	
 	/*treegraph<> g ( n );
 

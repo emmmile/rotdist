@@ -1,12 +1,16 @@
 
+#ifndef PRINT_HPP
+#define PRINT_HPP 	1
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <ostream>
-#include <sys/time.h>
-#include <ctime>
 #include "node.hpp"
 #include "utils.hpp"
+#include "ptree.hpp"
+#include "equivalence.hpp"
+
+
 
 
 static int logdec ( int n ) {
@@ -15,7 +19,6 @@ static int logdec ( int n ) {
 	
 	return i;
 }
-
 
 
 //printing tree in ascii
@@ -37,7 +40,7 @@ struct asciinode_struct
 #define MAX_HEIGHT 1000
 int lprofile[MAX_HEIGHT];
 int rprofile[MAX_HEIGHT];
-#define INFINITY (1<<20)
+#define MYINFINITY (1<<20)
 
 //adjust gap between left and right nodes
 int gap = 3;  
@@ -198,7 +201,7 @@ int compute_edge_lengths(asciinode *node) {
 //that the node has the given x cordinate.
 
 template <class T>
-void print_level(ostream& stream, asciinode *node, int x, int level, bool isleft, T* eqinfo = NULL)
+void print_level(ostream& stream, asciinode *node, int x, int level, bool isleft, equivalence_info<T>* eqinfo = NULL)
 {
 	int i;//, isleft;
 	if (node == NULL) return;
@@ -222,7 +225,7 @@ void print_level(ostream& stream, asciinode *node, int x, int level, bool isleft
 				stream << ' ';
 			}
 			print_next += i;
-			if ( !eqinfo || ( eqinfo && eqinfo[node->left->value-1] == EMPTY ) ||
+      if ( !eqinfo || ( eqinfo && (*eqinfo)[node->left->value] == EMPTY ) ||
 				      node->edge_length != level )
 				stream << "/";
 			else	stream << "X";
@@ -235,7 +238,7 @@ void print_level(ostream& stream, asciinode *node, int x, int level, bool isleft
 				stream << ' ';
 			}
 			print_next += i;
-			if ( !eqinfo || ( eqinfo && eqinfo[node->right->value-1] == EMPTY ) ||
+      if ( !eqinfo || ( eqinfo && (*eqinfo)[node->right->value] == EMPTY ) ||
 					node->edge_length != level )
 				stream << "\\";
 			else	stream << "X";
@@ -251,7 +254,7 @@ void print_level(ostream& stream, asciinode *node, int x, int level, bool isleft
 
 //prints ascii tree for given Tree structure
 template <class T>
-void print_tree(ostream& stream, node<T>* t, node<T>* base, T* eqinfo = NULL ) {
+void print_tree(ostream& stream, node<T>* t, node<T>* base, equivalence_info<T>* eqinfo = NULL ) {
 	asciinode *proot;
 	int xmin, i;
 	//if (t == NULL) return;
@@ -260,14 +263,14 @@ void print_tree(ostream& stream, node<T>* t, node<T>* base, T* eqinfo = NULL ) {
 	proot = build_ascii_tree(t, base);
 
 
-	memset( lprofile, INFINITY, MAX_HEIGHT );
-	memset( rprofile, -INFINITY, MAX_HEIGHT );
+  memset( lprofile, MYINFINITY, MAX_HEIGHT );
+  memset( rprofile, -MYINFINITY, MAX_HEIGHT );
 
 	// calcola le lunghezze degli archi nn capisco bene in che modo
 	int h = compute_edge_lengths(proot);
 	for (i=0; i< h && i < MAX_HEIGHT; i++) 
 	{
-		lprofile[i] = INFINITY;
+    lprofile[i] = MYINFINITY;
 	}
 	compute_lprofile(proot, 0, 0, 0);
 
@@ -293,3 +296,5 @@ void print_tree(ostream& stream, node<T>* t, node<T>* base, T* eqinfo = NULL ) {
 	free_ascii_tree( proot );
 }
 
+
+#endif
