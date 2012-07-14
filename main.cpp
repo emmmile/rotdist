@@ -22,16 +22,16 @@ int main ( int argv, char** argc ) {
 
 //	cout << sizeof( bimap<int,int> ) << endl;
 
-  for ( int i = 0; i < 1000; i++ ) {
+  for ( int i = 0; i < 20000; i++ ) {
 		ptree<int> aa ( n );
     ptree<int> bb ( n );
-    cout << "==================================\n";
 
 
     aa.simplify( bb );
 
     if ( aa != bb ) {
-      getchar();
+      cerr << "ORRORE\n";
+      exit( 1 );
     }
   }
 	

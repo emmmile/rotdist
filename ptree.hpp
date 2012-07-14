@@ -222,9 +222,9 @@ public:
 		return stream;
   }
 
-  string to_str ( equivalence_info<T>* eqinfo = NULL ) const {
+  string to_str ( equivalence_info<T>& eqinfo ) const {
     ostringstream stream;
-    print_tree( stream, this->nodes + this->root, this->nodes, eqinfo );
+    print_tree( stream, this->nodes + this->root, this->nodes, &eqinfo );
     return stream.str();
   }
 
@@ -464,6 +464,13 @@ public:
 
     // 1. Preprocessing, found the equivalent subtrees
     equal_subtrees( s, eqinfo );
+
+    // 2. On the main tree, executes the processing.
+    // this can cause new equivalent subtrees so it's good to be processed before
+    // Notice also that it should not be handled as a subtree because you loose informations
+    // about the root node (the variable it's copied!)
+    total += process( s, eqinfo );
+    equal_subtrees( s, eqinfo );
     node_set<T> equivalent( eqinfo );
 
     // 2. On every equivalent subtree it executes the processing
@@ -472,14 +479,10 @@ public:
       ptree<T> ss( s.subtree( eqinfo[*i] ), false );
 
       total += tt.process( ss, eqinfo );
-
       // and updates the equivalence informations
       equal_subtrees( s, eqinfo );
       equivalent.update( eqinfo );
     }
-
-    // 3. On the remaining nodes executes the same processing
-    total += process( s, eqinfo );
 		
     return total;
   }

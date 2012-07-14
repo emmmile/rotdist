@@ -1,7 +1,7 @@
 
 #'-O3', '-march=i686', '-pipe', '-Wno-deprecated', '-msse2', '-mfpmath=sse', '-fomit-frame-pointer'
 
-env = Environment( CCFLAGS = ['-Wall', '-g', '-pipe', '-Wno-deprecated', '-msse2', '-mfpmath=sse', '-fomit-frame-pointer'],
+env = Environment( CCFLAGS = ['-Wall', '-O3', '-pipe', '-Wno-deprecated', '-msse2', '-mfpmath=sse', '-fomit-frame-pointer'],
 		   LIBS=[],
 		   LIBPATH=[],
 		   CPPDEFINES=[],
