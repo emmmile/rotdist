@@ -29,12 +29,7 @@ int main ( int argv, char** argc ) {
 
 
     aa.simplify( bb );
-
-    if ( aa != bb ) {
-      cout << aa << endl;
-      cout << bb << endl;
-      getchar();
-    }
+//    getchar();
   }
 	
 //	treegraph<> g ( n );

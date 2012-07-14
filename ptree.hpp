@@ -36,6 +36,7 @@ protected:
 		this->nodes = parent.nodes;
 		this->allocated = false;
     this->root = root;
+    this->size = nodes[root].maxvalue - nodes[root].minvalue + 1;
 	}
 	
 	// costruisce un albero casuale, con n nodi, partendo dall'etichetta start_value, 
@@ -271,23 +272,23 @@ public:
 	}
 	
 	// ometto i controlli tanto verranno chiamate o da c() o da to_leaf
-	T phi ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
+  T phi ( const T x, equivalence_info<T>& eqinfo ) const {
 		T total = 0;
 		
 		// conto i nodi nel sottobraccio di sinistra
 		for ( T j = locate( x )->left(); j != EMPTY; j = locate( j )->right() ) {
-			if ( eqinfo && (*eqinfo)[j] != EMPTY ) break;
+      if ( eqinfo[j] != EMPTY ) break;
 			total++;
 		}
 		
 		return total;
 	}
 	
-	T gamma ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
+  T gamma ( const T x, equivalence_info<T>& eqinfo ) const {
 		T total = 0;
 	
 		for ( T j = locate( x )->right(); j != EMPTY; j = locate( j )->left() ) {
-			if ( eqinfo && (*eqinfo)[j] != EMPTY ) break;
+      if ( eqinfo[j] != EMPTY ) break;
 			total++;
 		}
 		
@@ -298,7 +299,7 @@ public:
 	// restituisce -1 in caso l'indice non sia valido (non dovrebbe mai verificarsi!)
 	// Nell'array eqinfo sono contenute le informazioni a riguardo i nodi omologhi, 
 	// se e' != NULL va considerato.
-	T c ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
+  T c ( const T x, equivalence_info<T>& eqinfo ) const {
 		if ( ! valid( x ) ) {
 			cerr << "c(): invalid value " << x << ".\n";
 			return -1;
@@ -316,9 +317,9 @@ public:
 	}
 
 	// calcola r(x), la distanza dalla radice
-	T r ( const T x, equivalence_info<T>* eqinfo = NULL ) const {
+  T r ( const T x, equivalence_info<T>& eqinfo ) const {
 		if ( ! valid( x ) ) {
-			cerr << "c(): invalid value " << x << ".\n";
+      cerr << "r(): invalid value " << x << ".\n";
 			return -1;
 		}
 
@@ -327,7 +328,7 @@ public:
 
 		// conto i nodi per arrivare alla radice
 		do {
-			if ( eqinfo && (*eqinfo)[j] != EMPTY ) break;
+      if ( eqinfo[j] != EMPTY ) break;
 			if ( locate( j )->father() == EMPTY ) break;
 			total++;
 
@@ -339,7 +340,7 @@ public:
 	
 	// funzione usata da simplify per portare il nodo x ad essere una foglia, 
 	// eseguendo c(x) rotazioni.
-  T to_leaf ( const T x, equivalence_info<T>* eqinfo = NULL ) {
+  T to_leaf ( const T x, equivalence_info<T>& eqinfo ) {
 		if ( ! valid( x ) ) {
 			cerr << "to_leaf(): invalid value " << x << ".\n";
 			return -1;
@@ -369,7 +370,7 @@ public:
   // Gli indici rappresentano i nodi in *this, mentre il contenuto l'eventuale nodo in s
   // che e' omologo (EMPTY altrimenti). XXX considera un solo array, riferito a *this,
   // se serve anche quello riferito a s, seqinfo allore e' != NULL.
-  void equal_subtrees ( ptree<T>& s, equivalence_info<T>* eqinfo ) {
+  void equal_subtrees ( ptree<T>& s, equivalence_info<T>& eqinfo ) {
     if ( s.size != size ) {
       cerr << "equal_subtrees(): not equivalent trees.\n";
       return;
@@ -379,7 +380,7 @@ public:
       if ( i == root ) continue;
 			
       if ( sameInterval( nodes[i], s.nodes[i] ) ) {
-        eqinfo->set(i, i);
+        eqinfo.set(i, i);
         continue;
       }
 			
@@ -387,97 +388,86 @@ public:
         T y = locate( s.nodes[i].minvalue - 1 )->right();
         // puo' succedere che y sia EMPTY!
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) )
-          eqinfo->set(y,i);
+          eqinfo.set(y,i);
       }
 			
       if ( s.nodes[i].maxvalue < size ) {
         T y = locate( s.nodes[i].maxvalue + 1 )->left();
 				
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) )
-          eqinfo->set(y,i);
+          eqinfo.set(y,i);
       }
     }
   }
 	
-//	// la funzione e' ricorsiva quindi value e' il nodo per cui si testa la non omologia
-//	// in eqinfo sono presenti le informazioni sui nodi equivalenti per *this, e in seqinfo quelle per s.
-//	// un prerequisito fondamentale e' che questa funzione venga chiamata su (sotto) alberi equivalenti
-//	// e che negli array info siano presenti le informazioni sugli altri alberi equivalenti contenuti:
-//	// in sostanze *this e s devono avere gli stessi nodi NON omologhi. Non faccio controlli a riguardo.
-//  T min_non_homologue ( ptree<T>& s, equivalence_info<T>* eqinfo, equivalence_info<T>* seqinfo, T value, T& cval ) {
-//		// calcolo il c sul nodo corrente
-//		cval = c( value, eqinfo ) + s.c( value, seqinfo );
+//  // la funzione e' ricorsiva quindi value e' il nodo per cui si testa la non omologia
+//  // in eqinfo sono presenti le informazioni sui nodi equivalenti per *this, e in seqinfo quelle per s.
+//  // un prerequisito fondamentale e' che questa funzione venga chiamata su (sotto) alberi equivalenti
+//  // e che negli array info siano presenti le informazioni sugli altri alberi equivalenti contenuti:
+//  // in sostanze *this e s devono avere gli stessi nodi NON omologhi. Non faccio controlli a riguardo.
+//  T min_cx ( ptree<T>& s, equivalence_info<T>& eqinfo, T value, T& cval ) {
+//    // calcolo il c sul nodo corrente
+//    cval = c( value, eqinfo ) + s.c( value, eqinfo.inverse() );
 
-//		// XXX alcune volte non mi accorgo che la radice non deve essere spostata (in eqinfo
-//		// o in seqinfo non trovo che le radici sono equivalenti)
-//		if ( value == s.root && value == this->root ) cval = 0;
-//		if ( cval == 0 ) return value;
+//    // XXX alcune volte non mi accorgo che la radice non deve essere spostata (in eqinfo
+//    // o in seqinfo non trovo che le radici sono equivalenti)
+//    if ( value == s.root && value == this->root ) cval = 0;
+//    if ( cval == 0 ) return value;
 		
 		
-//		T temp_value = EMPTY, temp_cx = 4, out = value;
-//		// guardo a sinistra quanto e' il minimo dei c(x)
-//		T x = locate( value )->left();
-//		// se il nodo sinistro e' non vuoto e non e' un nodo equivalente, mi calcolo c(x) minimo a sinistra
-//		if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
-//			temp_value = min_non_homologue( s, eqinfo, seqinfo, x, temp_cx );
+//    T temp_value = EMPTY, temp_cx = 4, out = value;
+//    // guardo a sinistra quanto e' il minimo dei c(x)
+//    T x = locate( value )->left();
+//    // se il nodo sinistro e' non vuoto e non e' un nodo equivalente, mi calcolo c(x) minimo a sinistra
+//    if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
+//      temp_value = min_cx( s, eqinfo, x, temp_cx );
 		
-//		// se tale valore e' minore di quello corrente, salvo i dati
+//    // se tale valore e' minore di quello corrente, salvo i dati
 		
-//		if ( temp_cx < cval ) {
-//			out = temp_value;
-//			cval = temp_cx;
-//		}
+//    if ( temp_cx < cval ) {
+//      out = temp_value;
+//      cval = temp_cx;
+//    }
 	
-//		// allo stesso modo guardo se ha destra posso migliorare il c(x)
-//		x = locate( value )->right();
-//		if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
-//			temp_value = min_non_homologue( s, eqinfo, seqinfo, x, temp_cx );
+//    // allo stesso modo guardo se ha destra posso migliorare il c(x)
+//    x = locate( value )->right();
+//    if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
+//      temp_value = min_cx( s, eqinfo, x, temp_cx );
 		
-//		if ( temp_cx < cval ) {
-//			out = temp_value;
-//			cval = temp_cx;
-//		}
+//    if ( temp_cx < cval ) {
+//      out = temp_value;
+//      cval = temp_cx;
+//    }
 		
-//		return out;
-//	}
+//    return out;
+//  }
 
-//  // processing di SIMPLIFY: rende identici s e *this, rendendo foglia mano mano i nodi che restano.
-//	// se non_trivial != NULL viene 1 se sono state fatte scelte non banali (con c(x) > 1)
-//  T process ( ptree<T>& s, equivalence_info<T>* eqinfo, equivalence_info<T>* seqinfo ) {
-//		T total = 0;
+  // processing di SIMPLIFY: rende identici s e *this, rendendo foglia mano mano i nodi che restano.
+  // se non_trivial != NULL viene 1 se sono state fatte scelte non banali (con c(x) > 1)
+  T process ( ptree<T>& s, equivalence_info<T>& eqinfo ) {
+    T total = 0;
 		
-//		T selected = EMPTY, cx;
-//		do {
-//      selected = min_non_homologue( s, eqinfo, seqinfo, root, cx );
-//      printf( "Selected node %d with c = %d.\n", selected, cx );
-//      if ( selected == root && cx == 0 ) break;
+    T selected = EMPTY, cx;
+    do {
+//      selected = min_cx( s, eqinfo, root, cx );
+      printf( "Selected node %d with c = %d.\n", selected, cx );
+      if ( selected == root && cx == 0 ) break;
 			
-//			if ( cx > 3 ) {
-//				cerr << "process(): selected node x = " << selected << ", with c(x) > 3.\n";
-//				return -1;
-//			}
-			
-//			//cout << *this << endl;
-//			total += to_leaf( selected, eqinfo );
-//			total += s.to_leaf( selected, seqinfo );
+      if ( cx > 3 ) {
+        cerr << "process(): selected node x = " << selected << ", with c(x) > 3.\n";
+        return -1;
+      }
 
-//      cout << *this << endl;
-//      cout << s << endl;
-			
-//			// aggiorno eqinfo e seqinfo, il nodo selected adesso e' equivalente. Potrebbero
-//			// esserci anche altri nodi equivalenti, ma verranno determinati dalla
-//			// min_non_homologue(), ovvero verranno selezionati per primi gli eventuali nodi x
-//			// con c(x) pari a 0
-//      eqinfo->set(selected, selected); //eqinfo[selected] = selected;
-//			//seqinfo[selected] = selected;
-//		} while ( true );
-		
-//		// le radici non sono state settate come equivalenti
-//    eqinfo->set(root, root);//eqinfo[root] = root;
-//		//seqinfo[root] = root;
-//		return total;
-//	}
+      total += to_leaf( selected, eqinfo );
+      total += s.to_leaf( selected, eqinfo.inverse() );
+
+      equal_subtrees( s, eqinfo );
+    } while ( true );
+
+    return total;
+  }
 	
+
   // l'algoritmo SIMPLIFY
   T simplify ( ptree<T>& s ) {
     if ( s.size != size ) {
@@ -490,28 +480,32 @@ public:
     equivalence_info<T> seqinfo = eqinfo.inverse();
 
     // 1. Preprocessing, cerca eventuali sottoalberi gia' equivalenti
-    equal_subtrees( s, &eqinfo );
-		
+    equal_subtrees( s, eqinfo );
+
+    node_set<T> equivalent( eqinfo );
+
     cout << this->to_str(&eqinfo) << endl;
     cout << s.to_str( &seqinfo ) << endl;
-    getchar();
-		
-    node_set<T> equivalent( eqinfo );
+    cout << equivalent << endl;
+
+
     // 2. Su ogni sottoalbero equivalente esegue il processing
-    //for ( node_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
-    for ( T i = nodes[root].minvalue; i <= nodes[root].maxvalue; ++i ) {
-      if ( eqinfo[i] == EMPTY ) continue;
-			
+    for ( typename node_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
+      cout << *i << endl;
       // per ogni coppia di nodi equivalenti prendo i sottoalberi
-      ptree<T> tt( subtree( i ), false );
-      ptree<T> ss( s.subtree( eqinfo[i] ), false );
+      ptree<T> tt( subtree( *i ), false );
+      ptree<T> ss( s.subtree( eqinfo[*i] ), false );
 
       // eseguo il processing
-//      total += tt.process( ss, &eqinfo, &seqinfo );
+      total += tt.process( ss, eqinfo );
+
+      // update the equivalent subtrees informations
+      tt.equal_subtrees( ss, eqinfo );
+      equivalent.update( eqinfo );
     }
 		
     // 3. Sui nodi non omologhi rimasti nell'albero corrente, esegue il processing
-//		total += process( s, &eqinfo, &seqinfo );
+//		total += process( s, eqinfo );
 		
     return total;
   }
