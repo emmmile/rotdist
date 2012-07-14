@@ -29,7 +29,10 @@ int main ( int argv, char** argc ) {
 
 
     aa.simplify( bb );
-//    getchar();
+
+    if ( aa != bb ) {
+      getchar();
+    }
   }
 	
 //	treegraph<> g ( n );

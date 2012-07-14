@@ -400,67 +400,51 @@ public:
     }
   }
 	
-//  // la funzione e' ricorsiva quindi value e' il nodo per cui si testa la non omologia
-//  // in eqinfo sono presenti le informazioni sui nodi equivalenti per *this, e in seqinfo quelle per s.
-//  // un prerequisito fondamentale e' che questa funzione venga chiamata su (sotto) alberi equivalenti
-//  // e che negli array info siano presenti le informazioni sugli altri alberi equivalenti contenuti:
-//  // in sostanze *this e s devono avere gli stessi nodi NON omologhi. Non faccio controlli a riguardo.
-//  T min_cx ( ptree<T>& s, equivalence_info<T>& eqinfo, T value, T& cval ) {
-//    // calcolo il c sul nodo corrente
-//    cval = c( value, eqinfo ) + s.c( value, eqinfo.inverse() );
+  // cerca il nodo con il cx piu' piccolo fra this e s.
+  // cval     the minimal cx found
+  // selected the correspondent node
+  void min_cx ( ptree<T>& s, equivalence_info<T>& eqinfo, T value, T& cval, T& selected ) {
+    // compute c for the current node
+    T current = c( value, eqinfo ) + s.c( value, eqinfo.inverse() );
+    if ( current < cval ) {
+      selected = value;
+      cval = current;
+    }
 
-//    // XXX alcune volte non mi accorgo che la radice non deve essere spostata (in eqinfo
-//    // o in seqinfo non trovo che le radici sono equivalenti)
-//    if ( value == s.root && value == this->root ) cval = 0;
-//    if ( cval == 0 ) return value;
-		
-		
-//    T temp_value = EMPTY, temp_cx = 4, out = value;
-//    // guardo a sinistra quanto e' il minimo dei c(x)
-//    T x = locate( value )->left();
-//    // se il nodo sinistro e' non vuoto e non e' un nodo equivalente, mi calcolo c(x) minimo a sinistra
-//    if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
-//      temp_value = min_cx( s, eqinfo, x, temp_cx );
-		
-//    // se tale valore e' minore di quello corrente, salvo i dati
-		
-//    if ( temp_cx < cval ) {
-//      out = temp_value;
-//      cval = temp_cx;
-//    }
-	
-//    // allo stesso modo guardo se ha destra posso migliorare il c(x)
-//    x = locate( value )->right();
-//    if ( x != EMPTY && (*eqinfo)[x] == EMPTY )
-//      temp_value = min_cx( s, eqinfo, x, temp_cx );
-		
-//    if ( temp_cx < cval ) {
-//      out = temp_value;
-//      cval = temp_cx;
-//    }
-		
-//    return out;
-//  }
+    // recursion
+    T l = locate( value )->left();
+    T r = locate( value )->right();
 
-  // processing di SIMPLIFY: rende identici s e *this, rendendo foglia mano mano i nodi che restano.
-  // se non_trivial != NULL viene 1 se sono state fatte scelte non banali (con c(x) > 1)
+    if ( l && eqinfo[l] == EMPTY )
+      min_cx( s, eqinfo, l, cval, selected );
+
+    if ( r && eqinfo[r] == EMPTY )
+      min_cx( s, eqinfo, r, cval, selected );
+  }
+
+  // SIMPLIFY processing, take the node with minimum c (not already equivalent),
+  // and make it leaf, until there are such nodes
   T process ( ptree<T>& s, equivalence_info<T>& eqinfo ) {
     T total = 0;
-		
-    T selected = EMPTY, cx;
+
     do {
-//      selected = min_cx( s, eqinfo, root, cx );
-      printf( "Selected node %d with c = %d.\n", selected, cx );
-      if ( selected == root && cx == 0 ) break;
-			
-      if ( cx > 3 ) {
-        cerr << "process(): selected node x = " << selected << ", with c(x) > 3.\n";
-        return -1;
-      }
+      T selected, cx = 4; // there is always a node with cx <= 3
+      min_cx( s, eqinfo, root, cx, selected );
+
+//      printf( "Selected node %d with c = %d.\n", selected, cx );
+//      if ( cx > 3 ) {
+//        cerr << "process(): selected node x = " << selected << ", with c(x) > 3.\n";
+//        return -1;
+//      }
+
+      if ( cx == 0 ) break;
 
       total += to_leaf( selected, eqinfo );
       total += s.to_leaf( selected, eqinfo.inverse() );
 
+      // possibly there are new equivalent nodes (if we are lucky)
+      // notice that the root is not set as equivalent, so you need to call
+      // this method from the parent (where there is the bigger tree)
       equal_subtrees( s, eqinfo );
     } while ( true );
 
@@ -468,7 +452,7 @@ public:
   }
 	
 
-  // l'algoritmo SIMPLIFY
+  // the SIMPLIFY algorithm
   T simplify ( ptree<T>& s ) {
     if ( s.size != size ) {
       cerr << "Not compatible trees in simplify()\n";
@@ -477,35 +461,25 @@ public:
 
     T total = 0;
     equivalence_info<T> eqinfo( size );
-    equivalence_info<T> seqinfo = eqinfo.inverse();
 
-    // 1. Preprocessing, cerca eventuali sottoalberi gia' equivalenti
+    // 1. Preprocessing, found the equivalent subtrees
     equal_subtrees( s, eqinfo );
-
     node_set<T> equivalent( eqinfo );
 
-    cout << this->to_str(&eqinfo) << endl;
-    cout << s.to_str( &seqinfo ) << endl;
-    cout << equivalent << endl;
-
-
-    // 2. Su ogni sottoalbero equivalente esegue il processing
+    // 2. On every equivalent subtree it executes the processing
     for ( typename node_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
-      cout << *i << endl;
-      // per ogni coppia di nodi equivalenti prendo i sottoalberi
       ptree<T> tt( subtree( *i ), false );
       ptree<T> ss( s.subtree( eqinfo[*i] ), false );
 
-      // eseguo il processing
       total += tt.process( ss, eqinfo );
 
-      // update the equivalent subtrees informations
-      tt.equal_subtrees( ss, eqinfo );
+      // and updates the equivalence informations
+      equal_subtrees( s, eqinfo );
       equivalent.update( eqinfo );
     }
-		
-    // 3. Sui nodi non omologhi rimasti nell'albero corrente, esegue il processing
-//		total += process( s, eqinfo );
+
+    // 3. On the remaining nodes executes the same processing
+    total += process( s, eqinfo );
 		
     return total;
   }
