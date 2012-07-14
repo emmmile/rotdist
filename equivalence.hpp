@@ -14,7 +14,7 @@ class equivalence_info {
 private:
   T* left;
   T* right;
-	bool allocated;
+  bool allocated;
   T dim;
 
   equivalence_info<T>* __inverse;
@@ -24,35 +24,35 @@ private:
     this->left  = l;
     this->right = r;
     allocated = false;
-	}
+  }
 
 public:
-	equivalence_info( uint size ) {
+  equivalence_info( uint size ) {
     left  = new T [size + 1];
     right = new T [size + 1];
     fill( left,  left + size + 1,  EMPTY );
     fill( right, right + size + 1, EMPTY );
-		allocated = true;
+    allocated = true;
     dim = size;
     __inverse = new equivalence_info( right, left, this );
-	}
+  }
 
-	~equivalence_info ( ) {
-		if ( !allocated ) return;
+  ~equivalence_info ( ) {
+    if ( !allocated ) return;
     delete[] left;
     delete[] right;
     delete __inverse;
-	}
+  }
 
-	inline T operator [] ( T value ) const {
+  inline T operator [] ( T value ) const {
     return left[value];
-	}
+  }
 
-	inline T set ( T a, T b ) {
+  inline T set ( T a, T b ) {
     left[a]  = b;
     right[b] = a;
-		return b;
-	}
+    return b;
+  }
 
   T size() const {
     return dim;
@@ -60,7 +60,7 @@ public:
 
   inline equivalence_info& inverse ( ) {
     return *__inverse;
-	}
+  }
 };
 
 
