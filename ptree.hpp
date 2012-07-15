@@ -9,7 +9,7 @@
 #include "print.hpp"
 #include "node.hpp"
 #include "ztree.hpp"
-#include "node_set.hpp"
+#include "simple_set.hpp"
 #include "equivalence.hpp"
 using namespace std;
 
@@ -18,6 +18,23 @@ namespace tree {
 
 enum rotation_type { LEFT, RIGHT };
 template <class T> class print;
+
+template<class T>
+struct Less {
+  Less() { }
+  inline bool operator () ( T& a, T& b ) {
+    return a < b;
+  }
+};
+
+template<class T>
+struct Greather {
+  Greather() { }
+  inline bool operator () ( T& a, T& b ) {
+    return a > b;
+  }
+};
+
 
 
 template <class T = unsigned int>
@@ -28,7 +45,7 @@ protected:
   T size;           // number of nodes
   T root;           // the value of the root node, nodes[root]
 
-
+  typedef equivalence_info<T> info;
 
   // costruttore di copia, crea un albero da un array di nodi gia' presente,
   // Serve per poter trattare i sottoalberi di un albero dato, modificando anche l'originale
@@ -222,7 +239,7 @@ public:
     return stream;
   }
 
-  string to_str ( equivalence_info<T>& eqinfo ) const {
+  string to_str ( info& eqinfo ) const {
     ostringstream stream;
     print_tree( stream, this->nodes + this->root, this->nodes, &eqinfo );
     return stream.str();
@@ -272,7 +289,7 @@ public:
   }
 
   // ometto i controlli tanto verranno chiamate o da c() o da to_leaf
-  T phi ( const T x, equivalence_info<T>& eqinfo ) const {
+  T phi ( const T x, info& eqinfo ) const {
     T total = 0;
 
     // conto i nodi nel sottobraccio di sinistra
@@ -284,7 +301,7 @@ public:
     return total;
   }
 
-  T gamma ( const T x, equivalence_info<T>& eqinfo ) const {
+  T gamma ( const T x, info& eqinfo ) const {
     T total = 0;
 
     for ( T j = locate( x )->right(); j != EMPTY; j = locate( j )->left() ) {
@@ -299,7 +316,7 @@ public:
   // restituisce -1 in caso l'indice non sia valido (non dovrebbe mai verificarsi!)
   // Nell'array eqinfo sono contenute le informazioni a riguardo i nodi omologhi,
   // se e' != NULL va considerato.
-  T c ( const T x, equivalence_info<T>& eqinfo ) const {
+  T c ( const T x, info& eqinfo ) const {
     if ( ! valid( x ) ) {
       cerr << "c(): invalid value " << x << ".\n";
       return -1;
@@ -317,7 +334,7 @@ public:
   }
 
   // calcola r(x), la distanza dalla radice
-  T r ( const T x, equivalence_info<T>& eqinfo ) const {
+  T r ( const T x, info& eqinfo ) const {
     if ( ! valid( x ) ) {
       cerr << "r(): invalid value " << x << ".\n";
       return -1;
@@ -340,7 +357,7 @@ public:
 
   // funzione usata da simplify per portare il nodo x ad essere una foglia,
   // eseguendo c(x) rotazioni.
-  T to_leaf ( const T x, equivalence_info<T>& eqinfo ) {
+  T to_leaf ( const T x, info& eqinfo ) {
     if ( ! valid( x ) ) {
       cerr << "to_leaf(): invalid value " << x << ".\n";
       return -1;
@@ -370,7 +387,7 @@ public:
   // Gli indici rappresentano i nodi in *this, mentre il contenuto l'eventuale nodo in s
   // che e' omologo (EMPTY altrimenti). XXX considera un solo array, riferito a *this,
   // se serve anche quello riferito a s, seqinfo allore e' != NULL.
-  void equal_subtrees ( ptree<T>& s, equivalence_info<T>& eqinfo ) {
+  void equal_subtrees ( ptree<T>& s, info& eqinfo ) {
     if ( s.size != size ) {
       cerr << "equal_subtrees(): not equivalent trees.\n";
       return;
@@ -400,13 +417,14 @@ public:
     }
   }
 
-  // cerca il nodo con il cx piu' piccolo fra this e s.
+  // cerca il nodo con il cx piu' piccolo (o piu' grande) fra this e s.
   // cval     the minimal cx found
   // selected the correspondent node
-  void min_cx ( ptree<T>& s, equivalence_info<T>& eqinfo, T value, T& cval, T& selected ) {
+  template<class Comp = Less<T> >
+  void best_c ( ptree<T>& s, info& eqinfo, T value, T& cval, T& selected, Comp comp = Comp() ) {
     // compute c for the current node
     T current = c( value, eqinfo ) + s.c( value, eqinfo.inverse() );
-    if ( current < cval ) {
+    if ( comp( current, cval ) ) {  // it means: current < cval, if comp is <
       selected = value;
       cval = current;
     }
@@ -416,20 +434,20 @@ public:
     T r = locate( value )->right();
 
     if ( l && eqinfo[l] == EMPTY )
-      min_cx( s, eqinfo, l, cval, selected );
+      best_c( s, eqinfo, l, cval, selected, comp );
 
     if ( r && eqinfo[r] == EMPTY )
-      min_cx( s, eqinfo, r, cval, selected );
+      best_c( s, eqinfo, r, cval, selected, comp );
   }
 
   // SIMPLIFY processing, take the node with minimum c (not already equivalent),
   // and make it leaf, until there are such nodes
-  T process ( ptree<T>& s, equivalence_info<T>& eqinfo ) {
+  T process ( ptree<T>& s, info& eqinfo ) {
     T total = 0;
 
     do {
       T selected, cx = 4; // there is always a node with cx <= 3
-      min_cx( s, eqinfo, root, cx, selected );
+        best_c( s, eqinfo, root, cx, selected );
 
 //      printf( "Selected node %d with c = %d.\n", selected, cx );
 //      if ( cx > 3 ) {
@@ -460,7 +478,7 @@ public:
     }
 
     T total = 0;
-    equivalence_info<T> eqinfo( size );
+    info eqinfo( size );
 
     // 1. Preprocessing, found the equivalent subtrees
     equal_subtrees( s, eqinfo );
@@ -471,10 +489,10 @@ public:
     // about the root node (the variable it's copied!)
     total += process( s, eqinfo );
     equal_subtrees( s, eqinfo );
-    node_set<T> equivalent( eqinfo );
+    simple_set<T> equivalent( eqinfo );
 
     // 2. On every equivalent subtree it executes the processing
-    for ( typename node_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
+    for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
       ptree<T> tt( subtree( *i ), false );
       ptree<T> ss( s.subtree( eqinfo[*i] ), false );
 
@@ -488,6 +506,25 @@ public:
   }
 
 
+  //  // porta un nodo alla radice
+  //  T to_root ( const T value, T* eqinfo = NULL ) {
+  //    //cout << "to_root" << endl;
+  //    T rotations = 0;
+  //    bool stop = false;
+
+  //    if ( eqinfo && eqinfo[value-start] != EMPTY )
+  //      return 0;
+
+  //    while ( root != value && !stop ) {
+  //      T on =  locate(value)->father();
+  //      if ( eqinfo && on && eqinfo[on-start] !=EMPTY )
+  //        stop = true;
+  //      up( value );
+  //      rotations++;
+  //    }
+
+  //    return rotations;
+  //  }
 
 
 //  // porta il sottolbero radicato in x in una catena sinistra o destra a seconda di type
@@ -597,61 +634,6 @@ public:
 
 
 ////  NUOVA PARTE
-
-//  T max_non_homologue ( ptree<T>& s, T* eqinfo, T* seqinfo, T value, T& cval ) {
-//    // calcolo il c sul nodo corrente
-//    cval = c( value, eqinfo ) + s.c( value, seqinfo );
-
-//    // XXX alcune volte non mi accorgo che la radice non deve essere spostata (in eqinfo
-//    // o in seqinfo non trovo che le radici sono equivalenti)
-//    if ( value == s.root && value == this->root ) cval = 0;
-//    if ( cval == 0 ) return value;
-
-
-//    T temp_value = EMPTY, temp_cx = cval, out = value;
-//    // guardo a sinistra quanto e' il massimo dei c(x)
-//    T x = locate( value )->left();
-//    // se il nodo sinistro e' non vuoto e non e' un nodo equivalente, mi calcolo c(x) massimo a sinistra
-//    if ( x != EMPTY && eqinfo[x - 1] == EMPTY )
-//      temp_value = max_non_homologue( s, eqinfo, seqinfo, x, temp_cx );
-
-//    if ( temp_cx > cval ) {
-//      out = temp_value;
-//      cval = temp_cx;
-//    }
-
-//    // allo stesso modo guardo se ha destra posso migliorare il c(x)
-//    x = locate( value )->right();
-//    if ( x != EMPTY && eqinfo[x - 1] == EMPTY )
-//      temp_value = max_non_homologue( s, eqinfo, seqinfo, x, temp_cx );
-
-//    if ( temp_cx > cval ) {
-//      out = temp_value;
-//      cval = temp_cx;
-//    }
-
-//    return out;
-//  }
-
-//  // porta un nodo alla radice
-//  T to_root ( const T value, T* eqinfo = NULL ) {
-//    //cout << "to_root" << endl;
-//    T rotations = 0;
-//    bool stop = false;
-
-//    if ( eqinfo && eqinfo[value-start] != EMPTY )
-//      return 0;
-
-//    while ( root != value && !stop ) {
-//      T on =  locate(value)->father();
-//      if ( eqinfo && on && eqinfo[on-start] !=EMPTY )
-//        stop = true;
-//      up( value );
-//      rotations++;
-//    }
-
-//    return rotations;
-//  }
 
 //  // step c(x) = 1 di MIX: porta a foglia tutti i nodi con c(x) = 1
 //  T remove_c1 ( ptree<T>& s, T* eqinfo, T* seqinfo ) {

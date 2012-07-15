@@ -6,20 +6,20 @@
 using namespace std;
 namespace tree {
 
-// implementation of a simple set, that has maximum size equal to the number of
-// nodes in a tree
+// implementation of a simple set, that has the property of be iterable during
+// insertions (not always in case of deletions).
 template<class T>
-class node_set {
+class simple_set {
   vector<T> nodes;
 public:
   typedef typename vector<T>::iterator iterator;
 
-  node_set( T size ) {
+  simple_set( T size ) {
     nodes.reserve( size + 1 );
     nodes.push_back( EMPTY );
   }
 
-  node_set( equivalence_info<T>& e ) {
+  simple_set( equivalence_info<T>& e ) {
     nodes.reserve( e.size() + 1 );
     nodes.push_back( EMPTY );
     update( e );
@@ -42,23 +42,33 @@ public:
   }
 
   bool contains ( T value ) {
-    for ( iterator i = begin(); i < end(); ++i ) {
+    for ( iterator i = begin(); i < end(); ++i )
       if ( *i == value ) return true;
-    }
 
     return false;
   }
 
-  bool add ( T value ) {
+  bool insert ( T value ) {
     if ( contains( value ) ) return false;
 
     nodes.push_back( value );
     return true;
   }
 
-  friend ostream& operator << ( ostream& stream, node_set<T>& s ) {
+  bool erase ( T value ) {
+    for ( iterator i = begin(); i < end(); ++i )
+      if ( *i == value ) {
+        swap( nodes.back(), *i );
+        nodes.pop_back();
+        return true;
+      }
+
+    return false;
+  }
+
+  friend ostream& operator << ( ostream& stream, simple_set<T>& s ) {
     stream << "{ ";
-    for ( node_set<T>::iterator i = s.begin(); i < s.end(); ++i )
+    for ( simple_set<T>::iterator i = s.begin(); i < s.end(); ++i )
       stream << *i << " ";
     return stream << "}";
   }

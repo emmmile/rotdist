@@ -9,7 +9,6 @@
 
 #include "ztree.hpp"
 #include "ptree.hpp"
-#include "node_set.hpp"
 //#include "treegraph.hpp"
 using namespace std;
 using namespace tree;
