@@ -45,7 +45,6 @@ protected:
   T size;           // number of nodes
   T root;           // the value of the root node, nodes[root]
 
-  typedef equivalence_info<T> info;
 
   // costruttore di copia, crea un albero da un array di nodi gia' presente,
   // Serve per poter trattare i sottoalberi di un albero dato, modificando anche l'originale
@@ -88,7 +87,6 @@ protected:
 
   // effettua una rotazione di un nodo a sinistra o a destra
   void rotate ( T value, rotation_type type ) {
-    if ( ! valid( value ) ) return;
     node<T>* u = locate( value );
     node<T>* f = locate( u->father() );
     node<T>* l = locate( u->left() );
@@ -140,15 +138,14 @@ protected:
   }
 
 public:
-  // utile per poter utilizzare il tipo di nodo anche dall'esterno
   typedef T node_type;
+  typedef equivalence_info<T> info;
 
-  // costruttore di default
   ptree ( ) {
     init( );
   }
 
-  // costruttore che genera un albero random con n nodi
+  // build a random tree with n nodes
   ptree ( T n ) : size( n ) {
     nodes = new node<T> [ n + 1 ];
     memset( nodes, 0, sizeof( node<T> ) * ( n + 1 ) );
@@ -156,12 +153,11 @@ public:
     allocated = true;
   }
 
-  // costruttore di copia, copia another dentro this
+  // copy constructor. If copyData is true this effectively copy the data
+  // otherwise the real data is shared
   ptree ( const ptree<T>& x, bool copyData = true ) {
     if ( copyData == true ) {
       nodes = new node<T> [ x.size + 1 ];
-      //memset( nodes, 0, sizeof( node<T> ) * ( x.size + 1 ) );
-      //memcpy( nodes, x.nodes, ( size + 1 ) * sizeof( node<T> ) );
       fill( nodes, nodes + x.size + 1, node<T>() );
       copy( x.nodes, x.nodes + size + 1, nodes );
       allocated = true;
@@ -183,16 +179,8 @@ public:
     z.get_tree<T>( root, nodes );
   }
 
-  // distruttore
   ~ptree ( ) {
     if ( allocated ) delete[] nodes;
-  }
-
-  // restituisce true se value e' contenuto nel sottoalbero, false altrimenti
-  bool valid ( const T value ) const {
-//    return !( value > start + size || value == EMPTY || value < 0 );
-    //return minvalue <= value && value <= maxvalue && value != EMPTY;
-    return true;
   }
 
   // restituisce in tempo costante il puntatore al nodo con chiave value
@@ -272,9 +260,6 @@ public:
   // XXX Il sottoalbero generato e' a tutti gli effetti un ptree ma i suoi nodi sono in
   // comune con quelli dell'albero di origine, per cui attenzione a non confondersi.
   ptree<T> subtree ( const T value ) const {
-    // in caso di errore restituisco un albero vuoto
-    if ( !valid( value ) ) return ptree<T>( );
-
     T left = value;
     // altrimenti determino l'intervallo e la dimensione del sottoalbero,
     // prima vado a sinistra il piu' possibile
@@ -317,11 +302,6 @@ public:
   // Nell'array eqinfo sono contenute le informazioni a riguardo i nodi omologhi,
   // se e' != NULL va considerato.
   T c ( const T x, info& eqinfo ) const {
-    if ( ! valid( x ) ) {
-      cerr << "c(): invalid value " << x << ".\n";
-      return -1;
-    }
-
     T total = 0;
 
     // conto i nodi nel sottobraccio di sinistra
@@ -335,11 +315,6 @@ public:
 
   // calcola r(x), la distanza dalla radice
   T r ( const T x, info& eqinfo ) const {
-    if ( ! valid( x ) ) {
-      cerr << "r(): invalid value " << x << ".\n";
-      return -1;
-    }
-
     T total = 0;
     T j = x;
 
@@ -358,11 +333,6 @@ public:
   // funzione usata da simplify per portare il nodo x ad essere una foglia,
   // eseguendo c(x) rotazioni.
   T to_leaf ( const T x, info& eqinfo ) {
-    if ( ! valid( x ) ) {
-      cerr << "to_leaf(): invalid value " << x << ".\n";
-      return -1;
-    }
-
     T total = 0;
 
     while ( phi( x, eqinfo ) != 0 ) {
