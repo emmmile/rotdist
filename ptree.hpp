@@ -471,17 +471,22 @@ public:
     // about the root node (the variable it's copied!)
     total += process( s, eqinfo );
     equal_subtrees( s, eqinfo );
-    node_set<T> equivalent( eqinfo );
+    unordered_node_set<T> equivalent( eqinfo );
+    unordered_node_set<T> visited( size );
 
     // 2. On every equivalent subtree it executes the processing
-    for ( typename node_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
-      ptree<T> tt( subtree( *i ), false );
-      ptree<T> ss( s.subtree( eqinfo[*i] ), false );
+    while ( equivalent.size() ) {
+      T next = equivalent.next();
+
+      ptree<T> tt( subtree( next ), false );
+      ptree<T> ss( s.subtree( eqinfo[next] ), false );
 
       total += tt.process( ss, eqinfo );
       // and updates the equivalence informations
       equal_subtrees( s, eqinfo );
-      equivalent.update( eqinfo );
+
+      visited.add( next );
+      equivalent.update( visited, eqinfo );
     }
 
     return total;

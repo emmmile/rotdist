@@ -1,6 +1,6 @@
 
 env = Environment(
-  CCFLAGS = ['-Wall', '-O3', '-pipe', '-funroll-loops'],
+  CCFLAGS = ['-Wall', '-O3', '-pipe', '-funroll-loops', '-std=c++11'],
   LIBS=[],
   LIBPATH=[],
   CPPDEFINES=[],

@@ -23,7 +23,7 @@ int main ( int argv, char** argc ) {
 //	cout << sizeof( bimap<int,int> ) << endl;
 
   for ( int i = 0; i < 20000; i++ ) {
-		ptree<int> aa ( n );
+    ptree<int> aa ( n );
     ptree<int> bb ( n );
 
 
