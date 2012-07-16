@@ -87,10 +87,10 @@ protected:
 
   // effettua una rotazione di un nodo a sinistra o a destra
   void rotate ( T value, rotation_type type ) {
-    node<T>* u = locate( value );
-    node<T>* f = locate( u->father() );
-    node<T>* l = locate( u->left() );
-    node<T>* r = locate( u->right() );
+    node<T>* u = nodes + value;
+    node<T>* f = nodes + u->father();
+    node<T>* l = nodes + u->left();
+    node<T>* r = nodes + u->right();
 //    printf( "%d %d %d %d\n", value, u->father(), u->left(), u->right() );
 //    printf( "%p %p %p %p\n", u, f, l, r );
 
@@ -101,7 +101,7 @@ protected:
       // sinistra invariata, destra cambia e padre cambia
       u->simple_set( u->left(), r->left(), u->right() );
 
-      if ( r->left() ) locate( r->left() )->set_father( value );
+      if ( r->left() ) nodes[r->left()].set_father( value );
 
       r->simple_set( value, r->right(), f ? f->value() : EMPTY );
 
@@ -109,7 +109,7 @@ protected:
       if ( !f || root == value ) root = r->value();
 
       // per preservare gli intervalli
-      if( u->right() ) u->maxvalue = locate( u->right() )->maxvalue;
+      if( u->right() ) u->maxvalue = nodes[u->right()].maxvalue;
       else u->maxvalue = value;
       r->minvalue = u->minvalue;
     } else {
@@ -119,14 +119,14 @@ protected:
       u->simple_set( l->right(), u->right(), u->left() );
 
       // il nodo che ora e' figlio sinistro di u, ha u come padre
-      if ( l->right() ) locate( l->right() )->set_father( value );
+      if ( l->right() ) nodes[l->right()].set_father( value );
 
       l->simple_set( l->left(), value, f ? f->value() : EMPTY );
 
       if ( !f || root == value ) root = l->value();
 
       // il minimo dell'intervallo del nodo u potrebbe essere cambiato
-      if( u->left() ) u->minvalue = locate( u->left() )->minvalue;
+      if( u->left() ) u->minvalue = nodes[u->left()].minvalue;
       else u->minvalue = value;
       l->maxvalue = u->maxvalue;
     }
@@ -183,15 +183,6 @@ public:
     if ( allocated ) delete[] nodes;
   }
 
-  // restituisce in tempo costante il puntatore al nodo con chiave value
-  inline node<T>* locate ( const T value ) const {
-    //if ( !valid( value ) ) return NULL;
-    // potrei cercare anche un nodo che non e' nel sottoalbero
-    // ad esempio il nodo padre del nodo radice!
-
-    return nodes + value;
-  }
-
   bool operator == ( const ptree<T>& x ) const {
     bool out = ( x.size == size ) && ( x.root == root );
 
@@ -236,20 +227,28 @@ public:
 
   // it is another way of seeing the rotation
   bool up ( const T value ) {
-    node<T>* u = locate( value );
+    node<T>* u = nodes + value;
     if ( u->father() == EMPTY ) return false;
 
-    node<T>* f = locate( u->father() );
+    node<T>* f = nodes + u->father();
     if ( f->left() == value ) rotate( u->father(), RIGHT );
     else                      rotate( u->father(), LEFT );
 
     return true;
   }
 
+  T up_all ( simple_set<T> r ) {
+    T total = 0;
+    for ( typename simple_set<T>::iterator i = r.begin(); i < r.end(); ++i )
+      total += up( *i );
+
+    return total;
+  }
+
   // rotate the edge a-b, b is the father
   bool rotate ( const T a, const T b ) {
-    if ( locate(b)->left() == a )       rotate( b, RIGHT );
-    else if ( locate(b)->right() == a ) rotate( b, LEFT );
+    if ( nodes[b].left() == a )         rotate( b, RIGHT );
+    else if ( nodes[b].right() == a )   rotate( b, LEFT );
     else {
       cerr << "improper usage of rotate(a,b).\n";
       return false;
@@ -268,12 +267,12 @@ public:
     T left = value;
     // altrimenti determino l'intervallo e la dimensione del sottoalbero,
     // prima vado a sinistra il piu' possibile
-    while ( locate( left )->left() != EMPTY ) left = locate( left )->left();
+    while ( nodes[left].left() != EMPTY ) left = nodes[left].left();
 
 
     T right = value;
     // poi vado a destra il piu' possibile e determino l'intervallo in O(n)
-    while ( locate( right )->right() != EMPTY ) right = locate( right )->right();
+    while ( nodes[right].right() != EMPTY ) right = nodes[right].right();
 
     return ptree<T>( *this, value );
   }
@@ -283,7 +282,7 @@ public:
     T total = 0;
 
     // conto i nodi nel sottobraccio di sinistra
-    for ( T j = locate( x )->left(); j != EMPTY; j = locate( j )->right() ) {
+    for ( T j = nodes[x].left(); j != EMPTY; j = nodes[j].right() ) {
       if ( eqinfo[j] != EMPTY ) break;
       total++;
     }
@@ -294,7 +293,7 @@ public:
   T gamma ( const T x, info& eqinfo ) const {
     T total = 0;
 
-    for ( T j = locate( x )->right(); j != EMPTY; j = locate( j )->left() ) {
+    for ( T j = nodes[x].right(); j != EMPTY; j = nodes[j].left() ) {
       if ( eqinfo[j] != EMPTY ) break;
       total++;
     }
@@ -326,10 +325,10 @@ public:
     // conto i nodi per arrivare alla radice
     do {
       if ( eqinfo[j] != EMPTY ) break;
-      if ( locate( j )->father() == EMPTY ) break;
+      if ( nodes[j].father() == EMPTY ) break;
       total++;
 
-      j = locate( j )->father();
+      j = nodes[j].father();
     } while ( j != EMPTY );
 
     return total;
@@ -377,14 +376,14 @@ public:
       }
 
       if ( s.nodes[i].minvalue > 1 ) {
-        T y = locate( s.nodes[i].minvalue - 1 )->right();
+        T y = nodes[s.nodes[i].minvalue - 1].right();
         // puo' succedere che y sia EMPTY!
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) )
           eqinfo.set(y,i);
       }
 
       if ( s.nodes[i].maxvalue < size ) {
-        T y = locate( s.nodes[i].maxvalue + 1 )->left();
+        T y = nodes[s.nodes[i].maxvalue + 1].left();
 
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) )
           eqinfo.set(y,i);
@@ -405,8 +404,8 @@ public:
     }
 
     // recursion
-    T l = locate( value )->left();
-    T r = locate( value )->right();
+    T l = nodes[value].left();
+    T r = nodes[value].right();
 
     if ( l && eqinfo[l] == EMPTY )
       best_c( s, eqinfo, l, cval, selected, comp );
@@ -422,7 +421,7 @@ public:
 
     do {
       T selected, cx = 4; // there is always a node with cx <= 3
-        best_c( s, eqinfo, root, cx, selected );
+      best_c( s, eqinfo, root, cx, selected );
 
 //      printf( "Selected node %d with c = %d.\n", selected, cx );
 //      if ( cx > 3 ) {
@@ -480,31 +479,29 @@ public:
     return total;
   }
 
+
+
+
+
   // cerca un nodo nell'albero s, che abbia il solito intervallo del nodo value in this.
   bool existSameInterval( T svalue, ptree<T>& s, info& eqinfo, T value ) {
-//    printf( "Comparing node %d with node %d of S that has interval [%d, %d]\n", value, svalue, s.nodes[svalue].minvalue, s.nodes[svalue].maxvalue);
-    if ( sameInterval( nodes[value], s.nodes[svalue] ) ) {
-      printf( "Node %d is 1-equivalent.\n", value );
+    if ( sameInterval( nodes[value], s.nodes[svalue] ) )
       return true;
-    }
 
     // recursion
-    T l = s.locate( svalue )->left();
-    T r = s.locate( svalue )->right();
+    T l = s.nodes[svalue].left();
+    T r = s.nodes[svalue].right();
 
     // return left + right
     return ( (l && eqinfo[l] == EMPTY) && existSameInterval( l, s, eqinfo, value ) ) ||
            ( (r && eqinfo[r] == EMPTY) && existSameInterval( r, s, eqinfo, value ) );
   }
 
-
-
-
-
+  // searches for nodes in this, that after an up rotation, becomes equivalent
   void semi_equivalent ( ptree<T>& s, T value, info& eqinfo, simple_set<T>& rset ) {
-    T father = locate( value )->father();
-    T l = locate( value )->left();
-    T r = locate( value )->right();
+    T father = nodes[value].father();
+    T l = nodes[value].left();
+    T r = nodes[value].right();
 
     if ( l && eqinfo[l] == EMPTY )
       semi_equivalent( s, l, eqinfo, rset );
@@ -526,42 +523,28 @@ public:
     rotate( father, value );
   }
 
-  void up_all ( simple_set<T> r ) {
-    for ( typename simple_set<T>::iterator i = r.begin(); i < r.end(); ++i )
-      up( *i );
-  }
 
-  void make_equivalent ( ptree<T>& s ) {
+  T make_equivalent ( ptree<T>& s ) {
     info eqinfo( size );
-    simple_set<T> rset( size );
+    simple_set<T> rset( size );           // contains the nodes that need 1 rotation to be equivalent
     equal_subtrees( s, eqinfo );
-
-    cout << this->to_str(eqinfo) << endl;
-    cout << s.to_str( eqinfo.inverse() ) << endl;
-
-
-    semi_equivalent( s, root, eqinfo, rset );
-    up_all( rset );
-    equal_subtrees( s, eqinfo );
-
-
     simple_set<T> equivalent( eqinfo );
+
+
+    // call on the root
+    semi_equivalent( s, root, eqinfo, rset );
     for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
       ptree<T> tt( subtree( *i ), false );
       ptree<T> ss( s.subtree( eqinfo[*i] ), false );
 
-      rset.clear();
+      // call on the already equivalent subtrees
       tt.semi_equivalent( ss, tt.root, eqinfo, rset );
-      up_all( rset );
 
-      // and updates the equivalence informations
       equal_subtrees( s, eqinfo );
       equivalent.update( eqinfo );
     }
 
-
-    cout << to_str(eqinfo) << endl;
-    cout << s.to_str( eqinfo.inverse() ) << endl;
+    return up_all( rset );
   }
 
   //  // porta un nodo alla radice
@@ -650,152 +633,8 @@ public:
 //    return total;
 //  }
 
-//  // algoritmo CENTRAL con preprocessing
-//  int central_preprocessing ( ptree<T>& s ) {
-//    int total = 0;
-//    T eqinfo [ size ];
-//    T seqinfo [ size ];
-
-//    couple ints [ size ];
-//    couple intt [ size ];
-
-//    equal_subtrees( s, eqinfo, seqinfo, intt, ints );
-//    // Su ogni sottoalbero equivalente esegue il processing basato su central
-//    for ( T i = 0; i < size; ++i ) {
-//      if ( eqinfo[i] == EMPTY ) continue;
-
-//      // per ogni coppia di nodi equivalenti prendo i sottoalberi
-//      ptree<T> tt = subtree( i + start );
-//      ptree<T> ss = s.subtree( eqinfo[ i ] );
 
 
-//      //cout << to_string( tt, ss, eqinfo, seqinfo ) << endl;
-//      //for ( int i = 1; i <= size; ++i )
-//      //  printf("node %d = %d / %d\n", i, eqinfo[i-1], seqinfo[i-1]);
-
-//      // eseguo il processing
-//      total += tt.central( ss, eqinfo, seqinfo );
-//      //printf( "CENTRAL: eseguite %d rotazioni.\n", total );
-
-//      // e ricalcolo i nodi equivalenti, che non vengono auto-riconosciuti come in simplify
-//      equal_subtrees( s, eqinfo, seqinfo, intt, ints );
-//    }
-
-//    //cout << to_string( *this, s, eqinfo, seqinfo ) << endl;
-//    total += central( s, eqinfo, seqinfo );
-//    //printf( "CENTRAL: eseguite %d rotazioni.\n", total );
-//    return total;
-//  }
-
-
-
-
-
-////  NUOVA PARTE
-
-
-
-//  // l'algoritmo MIX
-//  T mix ( ptree<T>& s ) {
-//    T total = 0;
-//    T eqinfo [ size ];
-//    T seqinfo [ size ];  // serve per calcolare il c(x) indipendentemente anche sul secondo albero
-//    T rxs [ size + 1 ];
-//    T selected;
-
-//#if DEBUG
-//    T tmp = 0;
-//#endif
-
-//    couple intt [ size ];
-//    couple ints [ size ];
-//    T intervalIDs [ size + 1];
-
-//    do {
-//      //T removed = total;
-//      equal_subtrees( s, eqinfo, seqinfo, intt, ints );
-//      for ( T i = 0; i < size; ++i ) {
-//        if ( eqinfo[i] == EMPTY ) continue;
-
-//        ptree<T> tt = subtree( i + start );
-//        ptree<T> ss = s.subtree( eqinfo[ i ] );
-
-//        total += tt.remove_c1( ss, eqinfo, seqinfo );
-//      }
-//      //cout << to_string( *this, s, eqinfo, seqinfo );
-//      total += remove_c1( s, eqinfo, seqinfo );
-//      //removed = total - removed;
-
-//#if DEBUG
-//      printf( "Primo passo: eseguite %d rotazioni.\n", total - tmp);
-//      cout << to_string( *this, s, eqinfo, seqinfo );
-//      tmp = total;
-//#endif
-
-
-//      equal_subtrees( s, eqinfo, seqinfo, intt, ints );
-//      calculate_r( s, eqinfo, seqinfo, rxs );
-//      calculate_intervals( eqinfo, intt, intervalIDs );
-
-//#if DEBUG
-//      cout << to_string<T>( *this, s, eqinfo, seqinfo ) << endl;
-
-//      /*for ( T i = start; i < start + size; ++i )
-//        printf ("Nodo %d: (%d, %d)\n", i, intt[intervalIDs[i]-start].first,
-//          intt[intervalIDs[i]-start].second);
-
-//      getchar();*/
-//#endif
-
-//      selected = EMPTY;
-//      // prendo quello con r(x) minimo
-//      for ( T i = 1; i <= size; ++i ) {
-//        //cout << "r(" << (*it).first << ") = " << (*it).second << endl;
-
-//        if ( rxs[i] == 1 || ( ( rxs[i] == 2 || rxs[i] == 3 ) &&
-//             i > intt[intervalIDs[i]-start].first && i < intt[intervalIDs[i]-start].second ) ) {
-//          if ( !selected || ( selected && rxs[i] < rxs[selected] ) )
-//            selected = i;
-//        }
-//      }
-
-//#if DEBUG
-//      cout << "Selected node " << selected  << " with r = " << rxs[selected] << endl;
-//#endif
-
-//      if ( selected != EMPTY ) {
-//        T security = 0;
-//        security += to_root( selected, eqinfo );
-//        security += s.to_root( selected, seqinfo );
-
-//        if ( security != rxs[selected] ) {
-//          cerr << "invalid to_root().\n";
-//          return -1;
-//        }
-
-//        total += rxs[selected];
-//      }
-//#if DEBUG
-//      printf( "Secondo passo: eseguite %d rotazioni.\n", total - tmp );
-//      cout << to_string( *this, s, eqinfo, seqinfo );
-//      tmp = total;
-//#endif
-//    } while ( selected != EMPTY /*|| removed != 0*/ );
-
-//    //terzo step: eseguo central sugli alberi equivalenti
-//    T lastStep = central_preprocessing( s );
-//#if DEBUG
-//    printf( "Terzo passo: eseguite %d rotazioni.\n", lastStep );
-//    cout << to_string( *this, s, eqinfo, seqinfo );
-//#endif
-//    return total + lastStep;
-//  }
-
-//  T mixed ( const ptree<T>& a ) const {
-//    ptree<T> x = *this;
-//    ptree<T> y = a;
-//    return x.mix( y );
-//  }
 
 
   void testIntervals ( int n ) {
