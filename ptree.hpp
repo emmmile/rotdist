@@ -184,7 +184,7 @@ public:
   }
 
   // restituisce in tempo costante il puntatore al nodo con chiave value
-  node<T>* locate ( const T value ) const {
+  inline node<T>* locate ( const T value ) const {
     //if ( !valid( value ) ) return NULL;
     // potrei cercare anche un nodo che non e' nel sottoalbero
     // ad esempio il nodo padre del nodo radice!
@@ -234,25 +234,30 @@ public:
   }
 
 
-
-  // porta il nodo value di una rotazione verso l'alto
+  // it is another way of seeing the rotation
   bool up ( const T value ) {
     node<T>* u = locate( value );
-    if ( u == NULL ) return false;
     if ( u->father() == EMPTY ) return false;
 
-
     node<T>* f = locate( u->father() );
-    // se il nodo da portare su sposta la radice, la nuova radice e' il nodo corrente
-    if ( u->father() == root )
-      root = value;
-
-    if ( f->left() == value )
-      rotate( u->father(), RIGHT );
-    else   rotate( u->father(), LEFT );
+    if ( f->left() == value ) rotate( u->father(), RIGHT );
+    else                      rotate( u->father(), LEFT );
 
     return true;
   }
+
+  // rotate the edge a-b, b is the father
+  bool rotate ( const T a, const T b ) {
+    if ( locate(b)->left() == a )       rotate( b, RIGHT );
+    else if ( locate(b)->right() == a ) rotate( b, LEFT );
+    else {
+      cerr << "improper usage of rotate(a,b).\n";
+      return false;
+    }
+
+    return false;
+  }
+
 
 
   // restituisce il sottoalbero radicato in value. E' necessario calcolare l'offset del
@@ -475,6 +480,82 @@ public:
     return total;
   }
 
+  // cerca un nodo nell'albero s, che abbia il solito intervallo del nodo value in this.
+  bool existSameInterval( T svalue, ptree<T>& s, info& eqinfo, T value ) {
+//    printf( "Comparing node %d with node %d of S that has interval [%d, %d]\n", value, svalue, s.nodes[svalue].minvalue, s.nodes[svalue].maxvalue);
+    if ( sameInterval( nodes[value], s.nodes[svalue] ) ) {
+      printf( "Node %d is 1-equivalent.\n", value );
+      return true;
+    }
+
+    // recursion
+    T l = s.locate( svalue )->left();
+    T r = s.locate( svalue )->right();
+
+    // return left + right
+    return ( (l && eqinfo[l] == EMPTY) && existSameInterval( l, s, eqinfo, value ) ) ||
+           ( (r && eqinfo[r] == EMPTY) && existSameInterval( r, s, eqinfo, value ) );
+  }
+
+  void semi_equivalent ( ptree<T>& s, T value, info& eqinfo, simple_set<T>& rset ) {
+    T father = locate( value )->father();
+    T l = locate( value )->left();
+    T r = locate( value )->right();
+
+    if ( l && eqinfo[l] == EMPTY )
+      semi_equivalent( s, l, eqinfo, rset );
+
+    if ( r && eqinfo[r] == EMPTY )
+      semi_equivalent( s, r, eqinfo, rset );
+
+
+    // since recursion begins at the root, I check the base case at the end (post-visit)
+    if ( value == root || father == root ) return;
+    rotate( value, father );
+//    printf( "Processing edge %d-%d, that creates interval [%d, %d]\n", value, father, nodes[father].minvalue, nodes[father].maxvalue );
+    if ( existSameInterval( s.root, s, eqinfo.inverse(), father ) )
+      rset.insert( value );
+    rotate( father, value );
+  }
+
+  void up_all ( simple_set<T> r ) {
+    for ( typename simple_set<T>::iterator i = r.begin(); i < r.end(); ++i )
+      up( *i );
+  }
+
+  void make_equivalent ( ptree<T>& s ) {
+    info eqinfo( size );
+    simple_set<T> rset( size );
+    equal_subtrees( s, eqinfo );
+
+    cout << this->to_str(eqinfo) << endl;
+    cout << s.to_str( eqinfo.inverse() ) << endl;
+
+
+    semi_equivalent( s, root, eqinfo, rset );
+    up_all( rset );
+    equal_subtrees( s, eqinfo );
+
+
+    simple_set<T> equivalent( eqinfo );
+    for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
+      ptree<T> tt( subtree( *i ), false );
+      ptree<T> ss( s.subtree( eqinfo[*i] ), false );
+
+      rset.clear();
+      tt.semi_equivalent( ss, tt.root, eqinfo, rset );
+      up_all( rset );
+
+      // and updates the equivalence informations
+      equal_subtrees( s, eqinfo );
+      equivalent.update( eqinfo );
+    }
+
+
+    cout << this->to_str(eqinfo) << endl;
+    cout << s.to_str( eqinfo.inverse() ) << endl;
+    getchar();
+  }
 
   //  // porta un nodo alla radice
   //  T to_root ( const T value, T* eqinfo = NULL ) {
@@ -605,75 +686,7 @@ public:
 
 ////  NUOVA PARTE
 
-//  // step c(x) = 1 di MIX: porta a foglia tutti i nodi con c(x) = 1
-//  T remove_c1 ( ptree<T>& s, T* eqinfo, T* seqinfo ) {
-//    T total = 0;
 
-
-//    T selected = EMPTY, cx;
-//    do {
-//      selected = min_non_homologue( s, eqinfo, seqinfo, root, cx );
-//      if ( selected == root && cx == 0 ) break;
-
-//      if ( cx > 1 ) break;
-//#if DEBUG
-//      printf( "Selected node %d with c = %d.\n", selected, cx );
-//#endif
-//      total += to_leaf( selected, eqinfo );
-//      total += s.to_leaf( selected, seqinfo );
-
-//      eqinfo[selected - 1] = selected;
-//      seqinfo[selected - 1] = selected;
-//    } while ( true );
-
-//    return total;
-//  }
-
-//  // TODO: questa e' O(n^2), si puo' fare tranquillamente in O(n)
-//  void calculate_r ( ptree<T>& s, T* eqinfo, T* seqinfo, T* rxs ) {
-//    memset( rxs, EMPTY, (size + 1) * sizeof( T ) );
-
-//    for ( T i = 1; i <= size; ++i ) {
-//      // provo a risalire ogni volta il piu' possibile, costoso ma semplice
-//      rxs[i] = this->r( i, eqinfo ) + s.r( i, seqinfo );
-//      //printf ("%d: %d %d\n", i, this->r( i, eqinfo ), s.r( i, seqinfo ) );
-//    }
-//  }
-
-
-//  void calculate_intervals_r ( T value, T* eqinfo, couple* intt, T* intervalIDs ) {
-//    if ( value == EMPTY ) return;
-
-//    T l = locate( value )->left();
-//    T r = locate( value )->right();
-
-//    // posso andare normalmente a sinistra, eredito le informazioni sull'intervallo
-//    if ( l != EMPTY && eqinfo[l-start] == EMPTY )
-//      intervalIDs[l] = intervalIDs[value];
-
-//    // posso andare normalmente a destra, eredito le informazioni sull'intervallo
-//    if ( r != EMPTY && eqinfo[r-start] == EMPTY )
-//      intervalIDs[r] = intervalIDs[value];
-
-//    // non posso andare a sinistra, NON eredito le informazioni sull'intervallo
-//    if ( l != EMPTY && eqinfo[l-start] != EMPTY )
-//      if ( intt[intervalIDs[l]-start].first == intt[intervalIDs[value]-start].first )
-//        intt[intervalIDs[value]-start].first = intt[intervalIDs[l]-start].second + 1;
-
-//    if ( r != EMPTY && eqinfo[r-start] != EMPTY )
-//      if ( intt[intervalIDs[r]-start].second == intt[intervalIDs[value]-start].second )
-//        intt[intervalIDs[value]-start].second = intt[intervalIDs[r]-start].first - 1;
-
-//    calculate_intervals_r( l, eqinfo, intt, intervalIDs );
-//    calculate_intervals_r( r, eqinfo, intt, intervalIDs );
-//  }
-
-
-//  void calculate_intervals ( T* eqinfo, couple* intt, T* intervalIDs ) {
-//    for ( T i = 0; i <= size; ++i ) { intervalIDs[i] = i; }
-
-//    calculate_intervals_r ( root, eqinfo, intt, intervalIDs );
-//  }
 
 //  // l'algoritmo MIX
 //  T mix ( ptree<T>& s ) {

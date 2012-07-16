@@ -22,16 +22,11 @@ int main ( int argv, char** argc ) {
 //	cout << sizeof( bimap<int,int> ) << endl;
 
   for ( int i = 0; i < 20000; i++ ) {
-		ptree<int> aa ( n );
+    ptree<int> aa ( n );
     ptree<int> bb ( n );
 
-
-    aa.simplify( bb );
-
-    if ( aa != bb ) {
-      cerr << "ORRORE\n";
-      exit( 1 );
-    }
+    aa.make_equivalent( bb );
+    cout << "===================================" << endl;
   }
 	
 //	treegraph<> g ( n );

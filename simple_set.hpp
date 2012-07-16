@@ -66,6 +66,10 @@ public:
     return false;
   }
 
+  void clear ( ) {
+    nodes.erase( begin(), end() );
+  }
+
   friend ostream& operator << ( ostream& stream, simple_set<T>& s ) {
     stream << "{ ";
     for ( simple_set<T>::iterator i = s.begin(); i < s.end(); ++i )
