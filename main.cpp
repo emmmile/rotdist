@@ -26,7 +26,9 @@ int main ( int argv, char** argc ) {
     ptree<int> bb ( n );
 
     aa.make_equivalent( bb );
+    bb.make_equivalent( aa );
     cout << "===================================" << endl;
+    getchar();
   }
 	
 //	treegraph<> g ( n );

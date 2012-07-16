@@ -497,6 +497,10 @@ public:
            ( (r && eqinfo[r] == EMPTY) && existSameInterval( r, s, eqinfo, value ) );
   }
 
+
+
+
+
   void semi_equivalent ( ptree<T>& s, T value, info& eqinfo, simple_set<T>& rset ) {
     T father = locate( value )->father();
     T l = locate( value )->left();
@@ -511,10 +515,14 @@ public:
 
     // since recursion begins at the root, I check the base case at the end (post-visit)
     if ( value == root || father == root ) return;
+
+    // simulate the situation after the rotation
     rotate( value, father );
-//    printf( "Processing edge %d-%d, that creates interval [%d, %d]\n", value, father, nodes[father].minvalue, nodes[father].maxvalue );
+    // check if there is such new interval in s
     if ( existSameInterval( s.root, s, eqinfo.inverse(), father ) )
       rset.insert( value );
+
+    // restore the old situation
     rotate( father, value );
   }
 
@@ -552,9 +560,8 @@ public:
     }
 
 
-    cout << this->to_str(eqinfo) << endl;
+    cout << to_str(eqinfo) << endl;
     cout << s.to_str( eqinfo.inverse() ) << endl;
-    getchar();
   }
 
   //  // porta un nodo alla radice
