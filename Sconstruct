@@ -4,7 +4,7 @@ env = Environment(
   LIBS=[],
   LIBPATH=[],
   CPPDEFINES=[],
-  LINKFLAGS=['-s', '-Os']
+  LINKFLAGS=[]
 )
 
 env.Program( "main", ['main.cpp'] )

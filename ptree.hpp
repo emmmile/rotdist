@@ -19,30 +19,13 @@ namespace tree {
 enum rotation_type { LEFT, RIGHT };
 template <class T> class print;
 
-template<class T>
-struct Less {
-  Less() { }
-  inline bool operator () ( T& a, T& b ) {
-    return a < b;
-  }
-};
-
-template<class T>
-struct Greather {
-  Greather() { }
-  inline bool operator () ( T& a, T& b ) {
-    return a > b;
-  }
-};
-
-
 
 template <class T = unsigned int>
 class ptree {
 protected:
   node<T>* nodes;
   bool allocated;   // is the array allocated by this instance?
-  T size;           // number of nodes
+  T __size;           // number of nodes
   T root;           // the value of the root node, nodes[root]
 
 
@@ -52,7 +35,7 @@ protected:
     this->nodes = parent.nodes;
     this->allocated = false;
     this->root = root;
-    this->size = nodes[root].maxvalue - nodes[root].minvalue + 1;
+    this->__size = nodes[root].maxvalue - nodes[root].minvalue + 1;
   }
 
   // costruisce un albero casuale, con n nodi, partendo dall'etichetta start_value,
@@ -81,7 +64,7 @@ protected:
   void init ( ) {
     nodes = NULL;
     root = 0;
-    size = 0;
+    __size = 0;
     allocated = false;
   }
 
@@ -146,7 +129,7 @@ public:
   }
 
   // build a random tree with n nodes
-  ptree ( T n ) : size( n ) {
+  ptree ( T n ) : __size( n ) {
     nodes = new node<T> [ n + 1 ];
     memset( nodes, 0, sizeof( node<T> ) * ( n + 1 ) );
     root = build_randomly( n, 1, nodes + 1, 0 );
@@ -155,25 +138,25 @@ public:
 
   // copy constructor. If copyData is true this effectively copy the data
   // otherwise the real data is shared
-  ptree ( const ptree<T>& x, bool copyData = true ) {
-    if ( copyData == true ) {
-      nodes = new node<T> [ x.size + 1 ];
-      fill( nodes, nodes + x.size + 1, node<T>() );
-      copy( x.nodes, x.nodes + size + 1, nodes );
+  ptree ( const ptree<T>& x, bool shared = false ) {
+    if ( shared == false ) {
+      nodes = new node<T> [ x.__size + 1 ];
+      //fill( nodes, nodes + x.size + 1, node<T>() );
+      copy( x.nodes, x.nodes + x.__size + 1, nodes );
       allocated = true;
     } else {
       nodes = x.nodes;
       allocated = false;
     }
 
-    size = x.size;
+    __size = x.__size;
     root = x.root;
   }
 
   // costruisce un ptree da uno ztree
-  ptree ( const ztree& z ) : size( z.vertices() ) {
-    nodes = new node<T> [ size + 1 ];
-    memset( nodes, 0, sizeof( node<T> ) * ( size + 1 ) );
+  ptree ( const ztree& z ) : __size( z.vertices() ) {
+    nodes = new node<T> [ __size + 1 ];
+    memset( nodes, 0, sizeof( node<T> ) * ( __size + 1 ) );
     allocated = true;
 
     z.get_tree<T>( root, nodes );
@@ -184,7 +167,7 @@ public:
   }
 
   bool operator == ( const ptree<T>& x ) const {
-    bool out = ( x.size == size ) && ( x.root == root );
+    bool out = ( x.__size == __size ) && ( x.root == root );
 
 
     for ( T i = nodes[root].minvalue; i <= nodes[root].maxvalue && out; ++i )
@@ -198,8 +181,8 @@ public:
   }
 
   bool operator < ( const ptree<T>& another ) const {
-    if ( size != another.size )
-      return size < another.size;
+    if ( __size != another.__size )
+      return __size < another.__size;
 
     for ( T i = nodes[root].minvalue; i <= nodes[root].maxvalue; ++i ) {
       if ( !( nodes[i] == another.nodes[i] ) )
@@ -213,17 +196,8 @@ public:
 
   // stampa l'albero sullo stream dato
   friend ostream& operator << ( ostream& stream, const ptree<T>& t ) {
-    print_tree( stream, t.nodes + t.root, t.nodes );
-    //print<T>( t ).draw( stream );
-    return stream;
+    return stream << print<T>( t );
   }
-
-  string to_str ( info& eqinfo ) const {
-    ostringstream stream;
-    print_tree( stream, this->nodes + this->root, this->nodes, &eqinfo );
-    return stream.str();
-  }
-
 
   // it is another way of seeing the rotation
   bool up ( const T value ) {
@@ -257,6 +231,17 @@ public:
     return false;
   }
 
+  node<T>* base ( ) const {
+    return nodes;
+  }
+
+  node<T>* get ( ) const {
+    return nodes + root;
+  }
+
+  T size ( ) const {
+    return __size;
+  }
 
 
   // restituisce il sottoalbero radicato in value. E' necessario calcolare l'offset del
@@ -353,7 +338,7 @@ public:
   }
 
 
-  bool sameInterval ( node<T>& a, node<T>& b ) {
+  bool sameInterval ( node<T>& a, node<T>& b ) const {
     return a.minvalue == b.minvalue && a.maxvalue == b.maxvalue;
   }
 
@@ -361,8 +346,8 @@ public:
   // Gli indici rappresentano i nodi in *this, mentre il contenuto l'eventuale nodo in s
   // che e' omologo (EMPTY altrimenti). XXX considera un solo array, riferito a *this,
   // se serve anche quello riferito a s, seqinfo allore e' != NULL.
-  void equal_subtrees ( ptree<T>& s, info& eqinfo ) {
-    if ( s.size != size ) {
+  void equal_subtrees ( const ptree<T>& s, info& eqinfo ) const {
+    if ( s.__size != __size ) {
       cerr << "equal_subtrees(): not equivalent trees.\n";
       return;
     }
@@ -382,7 +367,7 @@ public:
           eqinfo.set(y,i);
       }
 
-      if ( s.nodes[i].maxvalue < size ) {
+      if ( s.nodes[i].maxvalue < __size ) {
         T y = nodes[s.nodes[i].maxvalue + 1].left();
 
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) )
@@ -394,7 +379,7 @@ public:
   // cerca il nodo con il cx piu' piccolo (o piu' grande) fra this e s.
   // cval     the minimal cx found
   // selected the correspondent node
-  template<class Comp = Less<T> >
+  template<class Comp = less<T> >
   void best_c ( ptree<T>& s, info& eqinfo, T value, T& cval, T& selected, Comp comp = Comp() ) {
     // compute c for the current node
     T current = c( value, eqinfo ) + s.c( value, eqinfo.inverse() );
@@ -446,16 +431,17 @@ public:
 
   // the SIMPLIFY algorithm
   T simplify ( ptree<T>& s ) {
-    if ( s.size != size ) {
+    if ( s.__size != __size ) {
       cerr << "Not compatible trees in simplify()\n";
       return 0;
     }
 
     T total = 0;
-    info eqinfo( size );
+    info eqinfo( __size );
 
     // 1. Preprocessing, found the equivalent subtrees
     equal_subtrees( s, eqinfo );
+
 
     // 2. On the main tree, executes the processing.
     // this can cause new equivalent subtrees so it's good to be processed before
@@ -467,8 +453,8 @@ public:
 
     // 2. On every equivalent subtree it executes the processing
     for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
-      ptree<T> tt( subtree( *i ), false );
-      ptree<T> ss( s.subtree( eqinfo[*i] ), false );
+      ptree<T> tt( subtree( *i ), true );
+      ptree<T> ss( s.subtree( eqinfo[*i] ), true );
 
       total += tt.process( ss, eqinfo );
       // and updates the equivalence informations
@@ -480,6 +466,40 @@ public:
   }
 
 
+
+  T distance ( ptree<T>& s ) {
+    if ( s.__size != __size ) {
+      cerr << "Not compatible trees in simplify()\n";
+      return 0;
+    }
+
+    T total = 0;
+    info eqinfo( __size );
+
+    total += make_equivalent(s);
+    total += s.make_equivalent(*this);
+
+    // 1. Preprocessing, found the equivalent subtrees
+    equal_subtrees( s, eqinfo );
+
+    total += central( s, eqinfo );
+    equal_subtrees( s, eqinfo );
+    simple_set<T> equivalent( eqinfo );
+
+    // 2. On every equivalent subtree it executes the processing
+    for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
+      ptree<T> tt( subtree( *i ), true );
+      ptree<T> ss( s.subtree( eqinfo[*i] ), true );
+
+      //total += tt.process( ss, eqinfo );
+      total += tt.central( ss, eqinfo );
+      // and updates the equivalence informations
+      equal_subtrees( s, eqinfo );
+      equivalent.update( eqinfo );
+    }
+
+    return total;
+  }
 
 
 
@@ -525,8 +545,8 @@ public:
 
 
   T make_equivalent ( ptree<T>& s ) {
-    info eqinfo( size );
-    simple_set<T> rset( size );           // contains the nodes that need 1 rotation to be equivalent
+    info eqinfo( __size );
+    simple_set<T> rset( __size );           // contains the nodes that need 1 rotation to be equivalent
     equal_subtrees( s, eqinfo );
     simple_set<T> equivalent( eqinfo );
 
@@ -534,8 +554,8 @@ public:
     // call on the root
     semi_equivalent( s, root, eqinfo, rset );
     for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
-      ptree<T> tt( subtree( *i ), false );
-      ptree<T> ss( s.subtree( eqinfo[*i] ), false );
+      ptree<T> tt( subtree( *i ), true );
+      ptree<T> ss( s.subtree( eqinfo[*i] ), true );
 
       // call on the already equivalent subtrees
       tt.semi_equivalent( ss, tt.root, eqinfo, rset );
@@ -547,91 +567,75 @@ public:
     return up_all( rset );
   }
 
-  //  // porta un nodo alla radice
-  //  T to_root ( const T value, T* eqinfo = NULL ) {
-  //    //cout << "to_root" << endl;
-  //    T rotations = 0;
-  //    bool stop = false;
+  // porta un nodo alla radice
+  T to_root ( const T value ) {
+    //cout << "to_root" << endl;
+    T rotations = 0;
 
-  //    if ( eqinfo && eqinfo[value-start] != EMPTY )
-  //      return 0;
+    while ( root != value )
+      rotations += up( value );
 
-  //    while ( root != value && !stop ) {
-  //      T on =  locate(value)->father();
-  //      if ( eqinfo && on && eqinfo[on-start] !=EMPTY )
-  //        stop = true;
-  //      up( value );
-  //      rotations++;
-  //    }
-
-  //    return rotations;
-  //  }
+    return rotations;
+  }
 
 
-//  // porta il sottolbero radicato in x in una catena sinistra o destra a seconda di type
-//  // (algoritmi LEFT e RIGHT). Restituisce -1 in caso di errore, oppure 0 se l'albero e' nullo
-//  T list ( T i, rotation_type type = LEFT, T* eqinfo = NULL ) {
-//    if ( i == EMPTY ) return 0;
+  // porta il sottolbero radicato in x in una catena sinistra o destra a seconda di type
+  // (algoritmi LEFT e RIGHT). Restituisce -1 in caso di errore, oppure 0 se l'albero e' nullo
+  T list ( T i, info& eqinfo, rotation_type type = LEFT ) {
+    if ( i == EMPTY ) return 0;
 
-//    if ( ! valid( i ) ) {
-//      cerr << "list(): invalid value " << i << ".\n";
-//      return -1;
-//    }
+    T total = 0;
+    while ( i != EMPTY ) {
+      T next = i;
 
-//    T total = 0;
-//    while ( i != EMPTY ) {
-//      T next = i;
+      T j = i;
+      while ( ( type == RIGHT && phi( j, eqinfo ) != 0 ) ||
+              ( type == LEFT && gamma( j, eqinfo ) != 0 ) ) {
+        next = ( type == LEFT ) ? nodes[j].right() : nodes[j].left();
 
-//      T j = i;
-//      while ( ( type == RIGHT && phi( j, eqinfo ) != 0 ) ||
-//        ( type == LEFT && gamma( j, eqinfo ) != 0 ) ) {
-//        next = ( type == LEFT ) ? locate( j )->right() : locate( j )->left();
-
-//        rotate( j, type );
-//        total++;
+        rotate( j, type );
+        ++total;
 
 
-//        j = next;
-//      }
+        j = next;
+      }
 
-//      // l'ultimo nodo che ho ruotato (oppure i invariato) e' quello da cui devo scendere
-//      i = ( type == LEFT ) ? locate( next )->left() : locate( next )->right();
-//    }
+      // l'ultimo nodo che ho ruotato (oppure i invariato) e' quello da cui devo scendere
+      i = ( type == LEFT ) ? nodes[next].left() : nodes[next].right();
+    }
 
-//    return total;
-//  }
+    return total;
+  }
 
-//  // processing basato sull'algoritmo CENTRAL
-//  T central ( ptree<T>& z, T* eqinfo = NULL, T* seqinfo = NULL ) {
-//    if ( z.size != size ) {
-//      cerr << "central(): invalid subtrees.\n" << *this << endl << z << endl;
-//      return -1;
-//    }
+  // processing basato sull'algoritmo CENTRAL
+  T central ( ptree<T>& s, info& eqinfo ) {
+    if ( s.__size != __size ) {
+      cerr << "central(): invalid subtrees.\n" << endl;
+      return -1;
+    }
 
-//    T total = 0;
+    T total = 0;
 
-//    // cerco il nodo con c(x) massimo
-//    T selected = EMPTY, max;
-//    selected = max_non_homologue( z, eqinfo, seqinfo, root, max );
+    // cerco il nodo con c(x) massimo
+    T selected = EMPTY, cmax = 0;
+    best_c( s, eqinfo, root, cmax, selected, greater<T>() );
+//    printf( "Selected node %d with c = %d.\n", selected, cmax );
 
-//#if DEBUG
-//    printf( "CENTRAL: Selected node %d with c = %d\n", selected, max );
-//#endif
-//    if ( max == 0 )
-//      return total;
+    if ( cmax == 0 )
+      return total;
 
-//    // porto il nodo selezionato alla radice in entrambi gli alberi
-//    total +=   to_root( selected );
-//    total += z.to_root( selected );
+    // porto il nodo selezionato alla radice in entrambi gli alberi
+    total +=   to_root( selected );
+    total += s.to_root( selected );
 
-//    // applico gli algoritmi left e right ai sottoalberi
-//    total +=   list(   locate( selected )->right( ), LEFT, eqinfo );
-//    total += z.list( z.locate( selected )->right( ), LEFT, seqinfo );
-//    total +=   list(   locate( selected )->left( ), RIGHT, eqinfo );
-//    total += z.list( z.locate( selected )->left( ), RIGHT, seqinfo );
+    // applico gli algoritmi left e right ai sottoalberi
+    total +=   list(   nodes[selected].right(), eqinfo, LEFT );
+    total += s.list( s.nodes[selected].right(), eqinfo.inverse(), LEFT );
+    total +=   list(   nodes[selected].left(), eqinfo, RIGHT );
+    total += s.list( s.nodes[selected].left(), eqinfo.inverse(), RIGHT );
 
-//    return total;
-//  }
+    return total;
+  }
 
 
 
@@ -639,11 +643,11 @@ public:
 
   void testIntervals ( int n ) {
     for( int i = 0; i < n; ++i ) {
-        up( random() % (size + 1) );
+        up( random() % (__size + 1) );
 
         cout << *this << endl;
 
-        for( int i = 1; i <= size; ++i ) {
+        for( int i = 1; i <= __size; ++i ) {
             cout << nodes[i] << endl;
         }
 
@@ -653,86 +657,6 @@ public:
 
 
 };
-
-
-
-template <class T>
-class print : public ptree<T> {
-  int xmin;
-  int xmax;
-  int ymax;
-  int* edges;
-  char* buffer;
-  int bufferSize;
-  int rowlen;
-
-  void findBoundaries ( T value, int x, int y ) {
-    if ( x < xmin ) xmin = x;
-    if ( x > xmax ) xmax = x;
-    if ( y > ymax ) ymax = y;
-
-    T l = this->nodes[value].left();
-    T r = this->nodes[value].right();
-
-    if ( l ) findBoundaries( l, x - edges[l] - 1, y + edges[l] + 1 );
-    if ( r ) findBoundaries( r, x + edges[r] + 1, y + edges[r] + 1 );
-  }
-
-  void printTree ( T value, int x, int y, bool left ) {
-    T l = this->nodes[value].left();
-    T r = this->nodes[value].right();
-
-    char numBuffer [10];
-    sprintf( numBuffer, "%d", value );
-    //this works until value < 100
-    int correction = strlen( numBuffer ) > 1 ? !left : 0;
-    copy( numBuffer, numBuffer + strlen(numBuffer),
-          buffer + x + rowlen * y - correction );
-
-    if ( l ) {
-      for ( int i = 0; i < edges[l]; ++i )
-        buffer[(x - i - 1) + rowlen * (y + i + 1)] = '/';
-
-      printTree( l, x - edges[l] - 1, y + edges[l] + 1, true );
-    }
-    if ( r ) {
-      for ( int i = 0; i < edges[r]; ++i )
-         buffer[(x + i + 1) + rowlen * (y + i + 1)] = '\\';
-
-      printTree( r, x + edges[r] + 1, y + edges[r] + 1, false );
-    }
-  }
-
-
-public:
-  print( const ptree<T>& t ) : ptree<T>( t, false ) {
-    edges = new int [this->size + 1];
-    xmin = xmax = ymax = 0;
-    fill( edges, edges + this->size + 1, 1 );
-  }
-
-  ~print( ) {
-    delete[] edges;
-    delete[] buffer;
-  }
-
-  void draw ( ostream& stream ) {
-    findBoundaries( this->root, 0, 0 );
-
-    rowlen = xmax - xmin + 2; // +1 also for the \n
-    bufferSize = rowlen * (ymax + 1);
-    buffer = new char [bufferSize];
-    fill( buffer, buffer + bufferSize, ' ' );
-
-    for ( int y = 1; y <= ymax; ++y )
-      buffer[rowlen * y - 1] = '\n';
-      buffer[bufferSize - 1] = '\0';
-
-    printTree( this->root, -xmin, 0, true );
-    stream << buffer;
-  }
-};
-
 
 
 }

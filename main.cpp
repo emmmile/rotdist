@@ -13,46 +13,29 @@
 using namespace std;
 using namespace tree;
 
-
+typedef ptree<int> treet;
 
 int main ( int argv, char** argc ) {
 	if ( argv < 2 || atoi( argc[1] ) <= 0 ) return 1;
 	int n = atoi( argc[1] );
 
-//	cout << sizeof( bimap<int,int> ) << endl;
-
   for ( int i = 0; i < 20000; i++ ) {
-    ptree<int> aa ( n );
-    ptree<int> bb ( n );
+    treet a ( n );
+    treet b ( n );
+    treet c ( a );
+    treet d ( b );
+    treet first( a );
+    treet second( b );
 
-    aa.make_equivalent( bb );
-    bb.make_equivalent( aa );
-    cout << "===================================" << endl;
-    getchar();
+    int dist, simp;
+    if ( (dist = a.distance(b)) > (simp = c.simplify(d)) + 5 ) {
+      print<int>( first, second );
+      first.make_equivalent( second );
+      second.make_equivalent( first );
+      print<int>( first, second );
+      cout << "SIMPLIFY took " << simp << ", while ROT took " << dist << " rotations.\n";
+    }
   }
-	
-//	treegraph<> g ( n );
-
-//	for ( int i = 0; i < 100000; i++ ) {
-//		ztree a ( n );
-//		ztree b ( n );
-//		ptree<int> aa ( a );
-//		ptree<int> bb ( b );
-//		//cout << aa.to_str() << endl;
-
-//		int opt = g.distance( a, b );
-//		int mix = aa.mixed( bb );
-
-//		if ( opt != mix ) {
-//			printf( "%d vs %d\n", opt, mix );
-//			cout << to_string( aa, bb ) << endl;
-//			getchar();
-//		}
-
-//#if DEBUG
-//		cout << "=========================================================================\n";
-//#endif
-//	}
 
 	return 0;
 }
