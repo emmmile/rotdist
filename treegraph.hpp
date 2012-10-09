@@ -109,7 +109,7 @@ public:
     g = graph_type( edges.begin(), edges.end(), m.size() );
 
     //if ( VERBOSE )
-    //cout << "\nGenerated " << m.size() << " different trees." << endl;
+    cout << "Rotation graph generated. There are " << m.size() << " different trees." << endl;
   }
 
   void full_search ( ) {

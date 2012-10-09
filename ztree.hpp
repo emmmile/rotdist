@@ -189,21 +189,31 @@ public:
   // conversione da ztree a ptree<T> (array di node<T>)
   template <typename T>
   void get_tree ( T& root, node<T>* out ) const {
-    root = get_tree_r( out, EMPTY, 1, 0, tree.size() );
+    root = get_tree_r( out, EMPTY, 1, (int) vertices(), 0, tree.size() );
   }
 
+  // restituisce il valore del nodo radice dell'albero corrente
+  // father e' il valore del nodo padre
+  // pbeg e' il valore da cui parte la numerazione di questo sottoalbero
+  // pend il valore massimo
+  // [beg, end) sono indici all'interno del dynamic bitset
   template <typename T>
-  T get_tree_r ( node<T>* base, T father, T pbeg, int beg, int end ) const {
+  T get_tree_r ( node<T>* base, T father, T pbeg, T pend, int beg, int end ) const {
     if ( end - beg <= 1 ) return EMPTY;
 
     //printf( "%d %d %d %d %d\n", father, pbeg, pend, beg, end );
 
+    // restituisce la fine del sottoalbero sinistro radicato in beg
+    // (quanti nodi ho a sinistra?)
     int sep = first_subtree( beg ) + 1;
+    // calcolo il valore del nodo radice
     T value = pbeg + ( ( sep - beg - 1 ) >> 1 );
-    T left  = get_tree_r( base, value, pbeg, beg + 1, sep );
-    T right = get_tree_r( base, value, value + 1, sep, end );
+    // chiamo ricorsivamente a destra e a sinistra
+    T left  = get_tree_r( base, value, pbeg, value - 1, beg + 1, sep );
+    T right = get_tree_r( base, value, value + 1, pend, sep, end );
 
-    return base[value].set( value, left, right, father );
+    // XXX da rivedere
+    return base[value].set( value, left, right, father, pbeg, pend );
   }
 
   // XXX OPERATORS

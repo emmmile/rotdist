@@ -305,8 +305,6 @@ class print {
     pad();
   }
 
-
-
   void pad ( ) {
     int maxbuf = 512;
     vector<string> lines;
@@ -325,7 +323,14 @@ class print {
       out << setw(width) << left << lines[i] << endl;
   }
 
-  void merge ( stringstream& other ) {
+  string adjust( const string& line, uint width ) {
+    stringstream tmp;
+    tmp << setw(width) << right << line;
+    return tmp.str();
+  }
+
+  void merge ( print& other ) {
+    cout << this->width << " " << other.width << endl;
     stringstream final;
     int maxbuf = 512;
     string delim = "   ";
@@ -335,18 +340,20 @@ class print {
       char sline[maxbuf];
       out.getline( tline, maxbuf );
 
-      if ( !other.eof() ) {
-        other.getline( sline, maxbuf );
-        final << tline << delim << sline << endl;
+      if ( !other.out.eof() ) {
+        other.out.getline( sline, maxbuf );
+        //final.width( width + other.width + delim.length() );
+        final << adjust(tline,width) << delim << adjust(sline,other.width) << endl;
       } else {
         final << tline << endl;
       }
     }
 
-    while( !other.eof() ) {
+    while( !other.out.eof() ) {
       char sline[maxbuf];
-      other.getline( sline, maxbuf );
-      final << setw( width + delim.length() ) << left << sline << endl;
+      other.out.getline( sline, maxbuf );
+      final.width( width + other.width + delim.length() );
+      final << sline << endl;
     }
 
     out.str(std::string());
@@ -371,7 +378,7 @@ public:
 
     print_tree( out, t.get(), t.base(), &eqinfo );
     print<T> second( s, eqinfo.inverse() );
-    merge( second.out );
+    merge( second );
     stream << out.str();
   }
 

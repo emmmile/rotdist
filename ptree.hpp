@@ -196,7 +196,8 @@ public:
 
   // stampa l'albero sullo stream dato
   friend ostream& operator << ( ostream& stream, const ptree<T>& t ) {
-    return stream << print<T>( t );
+    print<T>( t, stream );
+    return stream;
   }
 
   // it is another way of seeing the rotation
@@ -224,7 +225,7 @@ public:
     if ( nodes[b].left() == a )         rotate( b, RIGHT );
     else if ( nodes[b].right() == a )   rotate( b, LEFT );
     else {
-      cerr << "improper usage of rotate(a,b).\n";
+      cerr << "improper usage of rotate(" << a << "," << b << ").\n";
       return false;
     }
 
@@ -469,20 +470,25 @@ public:
 
   T distance ( ptree<T>& s ) {
     if ( s.__size != __size ) {
-      cerr << "Not compatible trees in simplify()\n";
+      cerr << "Not compatible trees in distance()\n";
       return 0;
     }
 
-    T total = 0;
+    T total = 0, operations = 0;
     info eqinfo( __size );
 
-    total += make_equivalent(s);
-    total += s.make_equivalent(*this);
+    do {
+      operations = 0;
+      operations += make_equivalent(s);
+      operations += s.make_equivalent(*this);
+      total += operations;
+    } while ( operations != 0 );
 
     // 1. Preprocessing, found the equivalent subtrees
     equal_subtrees( s, eqinfo );
 
     total += central( s, eqinfo );
+
     equal_subtrees( s, eqinfo );
     simple_set<T> equivalent( eqinfo );
 
@@ -492,6 +498,38 @@ public:
       ptree<T> ss( s.subtree( eqinfo[*i] ), true );
 
       //total += tt.process( ss, eqinfo );
+      total += tt.central( ss, eqinfo );
+      // and updates the equivalence informations
+      equal_subtrees( s, eqinfo );
+      equivalent.update( eqinfo );
+    }
+
+    return total;
+  }
+
+
+T oldistance ( ptree<T>& s ) {
+    if ( s.__size != __size ) {
+      cerr << "Not compatible trees in oldistance()\n";
+      return 0;
+    }
+
+    T total = 0;
+    info eqinfo( __size );
+
+    // 1. Preprocessing, found the equivalent subtrees
+    equal_subtrees( s, eqinfo );
+
+    total += central( s, eqinfo );
+
+    equal_subtrees( s, eqinfo );
+    simple_set<T> equivalent( eqinfo );
+
+    // 2. On every equivalent subtree it executes the processing
+    for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
+      ptree<T> tt( subtree( *i ), true );
+      ptree<T> ss( s.subtree( eqinfo[*i] ), true );
+
       total += tt.central( ss, eqinfo );
       // and updates the equivalence informations
       equal_subtrees( s, eqinfo );
@@ -518,6 +556,7 @@ public:
   }
 
   // searches for nodes in this, that after an up rotation, becomes equivalent
+  // value is the current node
   void semi_equivalent ( ptree<T>& s, T value, info& eqinfo, simple_set<T>& rset ) {
     T father = nodes[value].father();
     T l = nodes[value].left();
@@ -531,7 +570,8 @@ public:
 
 
     // since recursion begins at the root, I check the base case at the end (post-visit)
-    if ( value == root || father == root ) return;
+    //if ( value == root || father == root ) return;
+    if ( value == root ) return;
 
     // simulate the situation after the rotation
     rotate( value, father );
@@ -544,7 +584,7 @@ public:
   }
 
 
-  T make_equivalent ( ptree<T>& s ) {
+  T make_equivalent ( ptree<T>& s, bool verbose = false ) {
     info eqinfo( __size );
     simple_set<T> rset( __size );           // contains the nodes that need 1 rotation to be equivalent
     equal_subtrees( s, eqinfo );
@@ -564,6 +604,7 @@ public:
       equivalent.update( eqinfo );
     }
 
+    if ( verbose ) cout << "found: " << rset << endl;
     return up_all( rset );
   }
 
