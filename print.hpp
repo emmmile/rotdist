@@ -330,7 +330,6 @@ class print {
   }
 
   void merge ( print& other ) {
-    cout << this->width << " " << other.width << endl;
     stringstream final;
     int maxbuf = 512;
     string delim = "   ";

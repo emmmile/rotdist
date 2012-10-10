@@ -466,6 +466,17 @@ public:
     return total;
   }
 
+  T make_all_equivalent( ptree<T>& s ) {
+    T total = 0, operations;
+    do {
+      operations = 0;
+      operations += make_equivalent(s, true);
+      operations += s.make_equivalent(*this, true);
+      total += operations;
+    } while ( operations != 0 );
+
+    return total;
+  }
 
 
   T distance ( ptree<T>& s ) {
@@ -474,21 +485,22 @@ public:
       return 0;
     }
 
-    T total = 0, operations = 0;
+    T total = 0;
     info eqinfo( __size );
 
-    do {
-      operations = 0;
-      operations += make_equivalent(s);
-      operations += s.make_equivalent(*this);
-      total += operations;
-    } while ( operations != 0 );
+    total += make_all_equivalent( s );
 
-    // 1. Preprocessing, found the equivalent subtrees
-    equal_subtrees( s, eqinfo );
+    while ( true ) {
+      equal_subtrees( s, eqinfo );
+      total += centralfirststep( s, eqinfo );
+      equal_subtrees( s, eqinfo );
 
-    total += central( s, eqinfo );
+      T refinement = make_all_equivalent( s );
+      total += refinement;
+      if ( refinement == 0 ) break;
+    }
 
+    total += centralsecondstep( s, eqinfo );
     equal_subtrees( s, eqinfo );
     simple_set<T> equivalent( eqinfo );
 
@@ -669,6 +681,17 @@ T oldistance ( ptree<T>& s ) {
     total +=   to_root( selected );
     total += s.to_root( selected );
 
+    T operations;bool quit = false;
+    do {
+      operations = 0;
+      operations += make_equivalent(s, true);
+      operations += s.make_equivalent(*this, true);
+      total += operations;
+      if (operations) quit = true;
+    } while ( operations != 0 );
+
+    if ( quit ) return total;
+
     // applico gli algoritmi left e right ai sottoalberi
     total +=   list(   nodes[selected].right(), eqinfo, LEFT );
     total += s.list( s.nodes[selected].right(), eqinfo.inverse(), LEFT );
@@ -678,6 +701,39 @@ T oldistance ( ptree<T>& s ) {
     return total;
   }
 
+
+
+  // processing basato sull'algoritmo CENTRAL
+  T centralfirststep ( ptree<T>& s, info& eqinfo ) {
+    assert( s.__size == __size );
+    T total = 0;
+
+    // cerco il nodo con c(x) massimo
+    T selected = EMPTY, cmax = 0;
+    best_c( s, eqinfo, root, cmax, selected, greater<T>() );
+
+    if ( cmax == 0 )
+      return total;
+
+    // porto il nodo selezionato alla radice in entrambi gli alberi
+    total +=   to_root( selected );
+    total += s.to_root( selected );
+
+    return total;
+  }
+
+  T centralsecondstep ( ptree<T>& s, info& eqinfo ) {
+    assert( s.__size == __size );
+    T total = 0;
+
+    // applico gli algoritmi left e right ai sottoalberi
+    total +=   list(   nodes[root].right(), eqinfo, LEFT );
+    total += s.list( s.nodes[s.root].right(), eqinfo.inverse(), LEFT );
+    total +=   list(   nodes[root].left(), eqinfo, RIGHT );
+    total += s.list( s.nodes[s.root].left(), eqinfo.inverse(), RIGHT );
+
+    return total;
+  }
 
 
 
