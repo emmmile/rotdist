@@ -25,6 +25,10 @@ public:
     update( e );
   }
 
+  int size ( ) {
+    return nodes.size() - 1;
+  }
+
   void update ( equivalence_info<T>& e ) {
     for ( T i = 1; i <= e.size(); ++i ) {
       if ( e[i] == EMPTY || contains( i ) ) continue;

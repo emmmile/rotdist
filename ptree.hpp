@@ -470,8 +470,8 @@ public:
     T total = 0, operations;
     do {
       operations = 0;
-      operations += make_equivalent(s, true);
-      operations += s.make_equivalent(*this, true);
+      operations += make_equivalent(s);
+      operations += s.make_equivalent(*this);
       total += operations;
     } while ( operations != 0 );
 
@@ -488,32 +488,38 @@ public:
     T total = 0;
     info eqinfo( __size );
 
+    // cerco di staccare nodi 1-equivalenti finche' posso
     total += make_all_equivalent( s );
 
-    while ( true ) {
-      equal_subtrees( s, eqinfo );
-      total += centralfirststep( s, eqinfo );
-      equal_subtrees( s, eqinfo );
+    // porto a radice il nodo x con c(x) massimo
+    equal_subtrees( s, eqinfo );
+    total += centralfirststep( s, eqinfo );
+    equal_subtrees( s, eqinfo );
 
-      T refinement = make_all_equivalent( s );
-      total += refinement;
-      if ( refinement == 0 ) break;
-    }
+    // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
+    // guardo se posso staccare altri nodi 1-equivalenti
+    total += make_all_equivalent( s );
 
-    total += centralsecondstep( s, eqinfo );
     equal_subtrees( s, eqinfo );
     simple_set<T> equivalent( eqinfo );
 
     // 2. On every equivalent subtree it executes the processing
-    for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ++i ) {
+    for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ) {
       ptree<T> tt( subtree( *i ), true );
       ptree<T> ss( s.subtree( eqinfo[*i] ), true );
 
-      //total += tt.process( ss, eqinfo );
-      total += tt.central( ss, eqinfo );
+      // porto il nodo x con c(x) massimo a radice anche in questo sottoalbero (creando nuovi nodi equivalenti)
+      total += tt.centralfirststep( ss, eqinfo );
+
+      // ricontrollo se posso staccare altri nodi 1-equivalenti (chiamo sempre su tutto l'albero
+      // perche' la make_all_equivalent e' progettata cosi'
+      total += make_all_equivalent( s );
+
       // and updates the equivalence informations
       equal_subtrees( s, eqinfo );
       equivalent.update( eqinfo );
+
+      if ( eqinfo[*i] == *i ) ++i;
     }
 
     return total;
@@ -681,17 +687,6 @@ T oldistance ( ptree<T>& s ) {
     total +=   to_root( selected );
     total += s.to_root( selected );
 
-    T operations;bool quit = false;
-    do {
-      operations = 0;
-      operations += make_equivalent(s, true);
-      operations += s.make_equivalent(*this, true);
-      total += operations;
-      if (operations) quit = true;
-    } while ( operations != 0 );
-
-    if ( quit ) return total;
-
     // applico gli algoritmi left e right ai sottoalberi
     total +=   list(   nodes[selected].right(), eqinfo, LEFT );
     total += s.list( s.nodes[selected].right(), eqinfo.inverse(), LEFT );
@@ -702,8 +697,6 @@ T oldistance ( ptree<T>& s ) {
   }
 
 
-
-  // processing basato sull'algoritmo CENTRAL
   T centralfirststep ( ptree<T>& s, info& eqinfo ) {
     assert( s.__size == __size );
     T total = 0;
@@ -721,6 +714,7 @@ T oldistance ( ptree<T>& s ) {
 
     return total;
   }
+
 
   T centralsecondstep ( ptree<T>& s, info& eqinfo ) {
     assert( s.__size == __size );
