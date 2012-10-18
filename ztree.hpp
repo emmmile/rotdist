@@ -5,46 +5,35 @@
 #include <string>
 #include <cstdlib>
 #include "node.hpp"
-#include <boost/dynamic_bitset.hpp>
+#include <bitset>
 using namespace std;
-using namespace boost;
 using namespace tree;
 
 
+
+template<unsigned int V>
 class ztree {
 private:
   // struttura dati che contiene la codifica dell'albero
-  dynamic_bitset<unsigned char> tree;
-
-
+  bitset<2 * V + 1> tree;
 
   // restituisce la posizione del nodo i-esimo in preordine
-  unsigned int preorder_node ( unsigned int n ) const {
-    if ( n > vertices() )
-      return -1;
+  inline unsigned int preorder_node ( unsigned int n ) const {
+    unsigned int i = 0;
 
-    for ( unsigned int i = 0; i < tree.size(); i++ ) {
+    for ( i = 0; i < tree.size() && n != 0; i++ )
       n -= tree[i];
-      if ( n == 0 ) return i;
-    }
 
-    // XXX questo caso non dovrebbe mai verificarsi, altrimenti vuol dire che
-    // la struttura non e' consistente
-    cerr << "Fatal Error in ztree::preorder_node().\n";
-    return -1;
+    return i;
   }
 
   // restituisco la posizione del padre del nodo pos
   unsigned int father ( unsigned int pos ) const {
-    if ( pos >= tree.size() )
-      return -1;//string::npos;
-
     unsigned int z;
     unsigned int o;
-    for ( z = o = 0, pos--; pos >= 0; pos-- ) {
+    for ( z = o = 0, pos--; pos >= 0 && z > 0; pos-- ) {
       z += !tree[pos];
       o +=  tree[pos];
-      if ( z <= o ) break;
     }
 
     return pos;
@@ -52,15 +41,11 @@ private:
 
   // restituisco la fine del primo sottoalbero che parte da pos
   unsigned int first_subtree ( unsigned int pos ) const {
-    if ( pos >= tree.size() )
-      return -1;//string::npos;
-
     unsigned int z;
     unsigned int o;
-    for ( z = o = 0, pos++; pos < tree.size(); pos++ ) {
+    for ( z = o = 0, pos++; pos < tree.size() && z <= o; pos++ ) {
       z += !tree[pos];
       o +=  tree[pos];
-      if ( z > o ) break;
     }
 
     return pos;
@@ -84,14 +69,10 @@ public:
   typedef unsigned int node_type;
 
   // XXX COSTRUTTORI
-  // costruisco un albero vuoto (0)
-  ztree ( ) : tree( 1 ) {
-    tree[0] = false;
-  }
 
   // costruisco un albero casuale con n nodi
-  ztree( const unsigned int n ) : tree( 2 * n + 1, false ) {
-    random_tree( n );
+  ztree( ) {
+    random_tree( V );
   }
 
   // costruttore di copia
@@ -99,25 +80,25 @@ public:
     tree = a.tree;
   }
 
-  // costruisce un albero dai sui sotto-alberi (aggiunge la radice)
-  ztree ( const ztree& a, const ztree& b )
-    : tree( a.tree.size() + 1 + b.tree.size(), false ) {
+  // costruisce un albero dai suoi sotto-alberi (aggiunge la radice)
+//  ztree ( const ztree& a, const ztree& b )
+//    : tree( a.tree.size() + 1 + b.tree.size(), false ) {
 
-    tree[0] = true;
-    for ( unsigned int i = 0; i < a.tree.size(); ++i )
-      tree[1 + i] = a.tree[i];
+//    tree[0] = true;
+//    for ( unsigned int i = 0; i < a.tree.size(); ++i )
+//      tree[1 + i] = a.tree[i];
 
-    for ( unsigned int i = 0; i < b.tree.size(); ++i )
-      tree[1 + a.tree.size() + i] = b.tree[i];
-  }
+//    for ( unsigned int i = 0; i < b.tree.size(); ++i )
+//      tree[1 + a.tree.size() + i] = b.tree[i];
+//  }
 
   // costruisce un albero da una stringa (generalmente passata da utente)
-  ztree ( const string& s, const unsigned int n ) : tree( 2 * n + 1, false ) {
+  ztree ( const string& s ) {
     unsigned int i, o, z;
     o = z = i = 0;
 
     // scorro la stringa finche trovo 0 e 1 e finche il numero di zeri e' minore o uguale
-    while ( ( s.size() == 2 * n + 1 ) &&
+    while ( ( s.size() == 2 * V + 1 ) &&
       i < s.size() &&
       ( s[i] == '0' || s[i] == '1' ) && z <= o ) {
 
@@ -131,34 +112,38 @@ public:
     }
 
     // nel caso abbia trovato una lettera e la stringa attuale non sia valida
-    if ( ( s.size() != 2 * n + 1 ) || ( z != o + 1 && i != s.size() - 1 ) )
-      tree.resize( 1, false );
+    if ( ( s.size() != 2 * V + 1 ) || ( z != o + 1 && i != s.size() - 1 ) )
+      cerr << "Error in ztree constructor.\n";
   }
 
 
   // XXX FUNCTIONS
-  // restituisce una stringa che rappresenta l'albero
-  string to_string ( ) const {
-    string out( tree.size(), '0' );
-    for ( unsigned int i = 0; i < tree.size(); i++ )
-      if ( tree[i] ) out[i] = '1';
+  string to_string() const {
+    string s = tree.to_string();
+    for ( string::iterator i = s.begin(), j = s.end() - 1; i < j; swap( *(i++), *(j--) ) );
+    return s;
+  }
 
-    return out;
+
+  unsigned long to_ulong ( ) {
+    return tree.to_ulong();
   }
 
   // ruota il nodo selezionato verso l'alto
-  ztree& rotate ( unsigned int ii ) {
+  ztree& up ( unsigned int ii ) {
     unsigned int i = preorder_node( ii );
     // casi eccezionali: radice, indice grande o negativo, selezionato non un nodo
-    if ( i == 0 || i >= tree.size() || tree[i] == false ) return *this;
-
+    if ( i == 0 || i >= tree.size() || tree[i] == false ) {
+      cerr << "Error in ztree::up().\n";
+      return *this;
+    }
 
     unsigned int j = father( i );
     unsigned int h = first_subtree( i );
 
     // rotazione a destra
     if ( j == i - 1 ) {
-      for ( unsigned int l = j; l <= j + h - i; l++ )
+      for ( unsigned int l = j; l <= j + h - i; ++l )
         tree[l] = tree[l + 1];
 
       // posiziono il padre
@@ -166,7 +151,7 @@ public:
       // il resto, cioe' i figli destro di i e di j restano nella solita posizione
     // rotazione a sinistra
     } else {
-      for ( unsigned int l = i - 1; l >= j + 1; l-- )
+      for ( unsigned int l = i - 1; l >= j + 1; --l )
         tree[l + 1] = tree[l];
 
       // posiziono il padre del nodo selezionato
@@ -183,7 +168,7 @@ public:
 
   // ritorna il numero di bytes allocati dalla struttura tree
   unsigned int bytes ( ) const {
-    return tree.num_blocks() * sizeof( dynamic_bitset<>::block_type );
+    return sizeof( tree );
   }
 
   // conversione da ztree a ptree<T> (array di node<T>)
@@ -218,7 +203,7 @@ public:
 
   // XXX OPERATORS
   ztree& operator ^ ( const unsigned int n ) {
-    return rotate( n );
+    return up( n );
   }
 
   bool operator == ( const ztree& x ) const {

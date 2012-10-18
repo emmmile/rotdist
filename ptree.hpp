@@ -11,7 +11,9 @@
 #include "ztree.hpp"
 #include "simple_set.hpp"
 #include "equivalence.hpp"
+#include "config.hpp"
 using namespace std;
+
 
 namespace tree {
 
@@ -154,12 +156,31 @@ public:
   }
 
   // costruisce un ptree da uno ztree
-  ptree ( const ztree& z ) : __size( z.vertices() ) {
+  ptree ( const ztree<N>& z ) : __size( z.vertices() ) {
     nodes = new node<T> [ __size + 1 ];
     memset( nodes, 0, sizeof( node<T> ) * ( __size + 1 ) );
     allocated = true;
 
     z.get_tree<T>( root, nodes );
+  }
+
+  inline unsigned int word ( ) {
+    unsigned int result = 0, bit = 0;
+    word_r( root, result, bit );
+    //printf( "\n" );
+    return result;
+  }
+
+  inline void word_r ( T node, unsigned int& result, unsigned int& bit ) {
+    if ( node == EMPTY ) {
+      bit++;
+      //printf( "0");
+      return;
+    }
+
+    result |= ( 1 << bit++ ); //printf( "1" );
+    word_r( nodes[node].left(), result, bit );
+    word_r( nodes[node].right(), result, bit );
   }
 
   ~ptree ( ) {

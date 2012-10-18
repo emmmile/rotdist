@@ -4,21 +4,23 @@
 #include <sys/time.h>
 #include <string.h>
 #include <stdio.h>
+#include <cassert>
 #include <algorithm>
-#include <boost/bimap.hpp>
-
+#include "config.hpp"
 #include "ztree.hpp"
 #include "ptree.hpp"
-#include "treegraph.hpp"
 using namespace std;
 using namespace tree;
 
-typedef ptree<int> treet;
+
+
+
+
+
 
 int main ( int argv, char** argc ) {
-  if ( argv < 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
-	int n = atoi( argc[1] );
-  int runs = atoi( argc[2] );
+  if ( argv < 2 || atoi( argc[1] ) <= 0 ) return 1;
+  int runs = atoi( argc[1] );
 
   // test specifico su un albero che mi da noia
 //  ztree a( "110010110110000", 7 );
@@ -37,15 +39,14 @@ int main ( int argv, char** argc ) {
   // comparando la distanza trovata tramite l'algoritmo che stiamo provando
   // con l'ottimo (alla fine viene stampata una media).
   int optimal = 0, distance = 0, oldistance = 0;
-  treegraph<> opt( n );
   for (int i = 0; i < runs; ++i ) {
-    ztree a( n );
-    ztree b( n );
-    treet aa( a ), aaa( a );
-    treet bb( b ), bbb( b );
+    ztree<N> a;
+    ztree<N> b;
+    ptree<int> aa( a ), aaa( a );
+    ptree<int> bb( b ), bbb( b );
 
     int toptimal, tdistance, toldistance;
-    toptimal = opt.distance(a, b);
+    //toptimal = opt.distance(a, b);
     tdistance = aa.distance( bb );
     toldistance = aaa.oldistance( bbb );
 //    if ( aa != bb ) {

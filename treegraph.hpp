@@ -10,11 +10,13 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/visitors.hpp>
 #include "ztree.hpp"
 #include "ptree.hpp"
+
 
 #define VERBOSE   0
 using namespace std;
