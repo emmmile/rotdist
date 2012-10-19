@@ -18,38 +18,43 @@ private:
   bitset<2 * V + 1> tree;
 
   // restituisce la posizione del nodo i-esimo in preordine
-  inline unsigned int preorder_node ( unsigned int n ) const {
-    unsigned int i = 0;
+    inline unsigned int preorder_node ( unsigned int n ) const {
+      unsigned int i = 0;
+      for ( i = 0; i < tree.size() && n != 0; i++ ) {
+        n -= tree[i];
+      }
 
-    for ( i = 0; i < tree.size() && n != 0; i++ )
-      n -= tree[i];
-
-    return i;
-  }
-
-  // restituisco la posizione del padre del nodo pos
-  unsigned int father ( unsigned int pos ) const {
-    unsigned int z;
-    unsigned int o;
-    for ( z = o = 0, pos--; pos >= 0 && z > 0; pos-- ) {
-      z += !tree[pos];
-      o +=  tree[pos];
+      return i - 1;
     }
 
-    return pos;
-  }
+    // restituisco la posizione del padre del nodo pos
+    inline unsigned int father ( unsigned int pos ) const {
 
-  // restituisco la fine del primo sottoalbero che parte da pos
-  unsigned int first_subtree ( unsigned int pos ) const {
-    unsigned int z;
-    unsigned int o;
-    for ( z = o = 0, pos++; pos < tree.size() && z <= o; pos++ ) {
-      z += !tree[pos];
-      o +=  tree[pos];
+      unsigned int z;
+      unsigned int o;
+      for ( z = o = 0, pos--; pos >= 0; pos-- ) {
+        z += !tree[pos];
+        o +=  tree[pos];
+        if ( z <= o ) break;
+      }
+
+      return pos;
     }
 
-    return pos;
-  }
+    // restituisco la fine del primo sottoalbero che parte da pos
+    inline unsigned int first_subtree ( unsigned int pos ) const {
+
+      unsigned int z;
+      unsigned int o;
+      for ( z = o = 0, pos++; pos < tree.size(); pos++ ) {
+        z += !tree[pos];
+        o +=  tree[pos];
+        if ( z > o ) break;
+      }
+
+      return pos;
+    }
+
 
   void random_tree ( const int n ) {
     unsigned int begin = 0;
@@ -125,15 +130,19 @@ public:
   }
 
 
-  unsigned long to_ulong ( ) {
+  unsigned long to_ulong ( ) const {
     return tree.to_ulong();
   }
 
   // ruota il nodo selezionato verso l'alto
-  ztree& up ( unsigned int ii ) {
+  inline ztree& up ( unsigned int ii ) {
     unsigned int i = preorder_node( ii );
     // casi eccezionali: radice, indice grande o negativo, selezionato non un nodo
-    if ( i == 0 || i >= tree.size() || tree[i] == false ) {
+    if ( i == 0 )
+      return *this;
+
+    if ( i >= tree.size() || tree[i] == false ) {
+      cout << i << " " << tree.size() << " " << tree[i] << endl;
       cerr << "Error in ztree::up().\n";
       return *this;
     }
