@@ -15,7 +15,8 @@ using namespace tree;
 
 
 
-size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
+size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited,
+                  float& load, size_t& buckets ) {
   unordered_set<unsigned long> queued( 100 );
   vector<ztree<N> > q;
   q.push_back( a );
@@ -41,6 +42,8 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
       // se l'ho trovato, esco
       if ( newone == b ) {
         visited = queued.size();
+        load = queued.load_factor();
+        buckets = queued.bucket_count();
         return d + 1;
       }
 
@@ -58,6 +61,8 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   }
 
   visited = queued.size();
+  load = queued.load_factor();
+  buckets = queued.bucket_count();
   return d;
 }
 
@@ -68,7 +73,7 @@ int main ( int argv, char** argc ) {
   int runs = atoi( argc[1] );
 
 
-  cout << "first\tsecond\topt\tdist\tcent\tvisited\n";
+  cout << "first\tsecond\topt\tdist\tcent\tvisited\tload\tbuckets\n";
   // genera runs coppie di alberi casuali con n nodi
   for (int i = 0; i < runs; ++i ) {
     ztree<N> a;
@@ -76,19 +81,19 @@ int main ( int argv, char** argc ) {
     ptree<int> aa( a ), aaa( a );
     ptree<int> bb( b ), bbb( b );
 
-    size_t visited;
+    float load;
+    size_t visited, buckets;
     int toptimal, tdistance, toldistance;
-    toptimal = distance(a, b, visited);
+    toptimal = distance(a, b, visited, load, buckets);
     tdistance = aa.distance( bb );
     toldistance = aaa.oldistance( bbb );
 
     assert( aa == bb );
     assert( aaa == bbb );
     assert( toptimal <= tdistance );
-    size_t asd;
-    assert( toptimal == distance(b,a,asd));
 
-    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << toldistance << "\t" << visited << endl;
+    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << toldistance << "\t" << visited << "\t";
+    cout << load << "\t" << buckets << endl;
   }
 
 	return 0;
