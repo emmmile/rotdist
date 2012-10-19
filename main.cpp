@@ -85,7 +85,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   }
 
   if (!found) {
-      cerr << "OMG.\n";
+      cerr << "Fatal error.\n";
       cout << queued.count( a.to_ulong() ) << " " << queued.count( b.to_ulong() ) << endl;
       exit( 1 );
   }
@@ -119,7 +119,6 @@ int main ( int argv, char** argc ) {
     assert( toptimal <= tdistance );
 
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << toldistance << "\t" << visited << endl;
-    assert( toptimal == distance(b,a,visited) );
   }
 
 	return 0;
