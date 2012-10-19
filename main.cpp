@@ -7,6 +7,7 @@
 #include <cassert>
 #include <deque>
 #include <algorithm>
+#include <thread>
 #include <unordered_set>
 #include "config.hpp"
 #include "ztree.hpp"
@@ -14,19 +15,6 @@
 using namespace std;
 using namespace tree;
 
-
-void test ( uint runs ) {
-
-  for ( unsigned int i = 1; i <= runs; ++i ) {
-      ztree<N> a;
-      ztree<N> b;
-      if ( ( a.to_ulong() == b.to_ulong() ) && !(a == b) ) {
-          cout << a << endl << b << endl << a.to_ulong() << b.to_ulong() << endl;
-          exit( 1 );
-        }
-    }
-
-}
 
 
 size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
@@ -96,13 +84,8 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
 
 
 
-int main ( int argv, char** argc ) {
-  if ( argv < 2 || atoi( argc[1] ) <= 0 ) return 1;
-  int runs = atoi( argc[1] );
-
-  cout << "first\tsecond\topt\tdist\tcent\tvisited\n";
-  // genera runs coppie di alberi casuali con n nodi
-  for (int i = 0; i < runs; ++i ) {
+void testfunctions ( size_t runs ) {
+  for (size_t i = 0; i < runs; ++i ) {
     ztree<N> a;
     ztree<N> b;
     ptree<int> aa( a ), aaa( a );
@@ -120,6 +103,26 @@ int main ( int argv, char** argc ) {
 
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << toldistance << "\t" << visited << endl;
   }
+}
+
+
+int main ( int argv, char** argc ) {
+  if ( argv < 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  size_t threads = atoi( argc[1] );
+  size_t runs = atoi( argc[2] );
+
+  cout << "first\tsecond\topt\tdist\tcent\tvisited\n";
+  vector<thread> t;
+
+  //Launch a group of threads
+  for (int i = threads; i > 0; --i) {
+    size_t part = runs / i;
+    t.push_back( thread( testfunctions, part ) );
+    runs -= part;
+  }
+
+  //Join the threads with the main thread
+  for( auto& i : t ) i.join();
 
 	return 0;
 }
