@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include "node.hpp"
 #include <bitset>
+#include "random.hpp"
 using namespace std;
 using namespace tree;
 
@@ -61,11 +62,25 @@ private:
     fill_randomly_r( begin, n );
   }
 
+  void random_tree ( const int n, Random& gen ) {
+    unsigned int begin = 0;
+    fill_randomly_r( begin, n, gen );
+  }
+
   void fill_randomly_r ( unsigned int& out, const int n ) {
     if ( n == 0 ) return;
 
     tree[out] = true;
     int i = random( ) % n;
+    fill_randomly_r( ++out, i );
+    fill_randomly_r( ++out, n - i - 1 );
+  }
+
+  void fill_randomly_r ( unsigned int& out, const int n, Random& gen ) {
+    if ( n == 0 ) return;
+
+    tree[out] = true;
+    int i = gen( n );
     fill_randomly_r( ++out, i );
     fill_randomly_r( ++out, n - i - 1 );
   }
@@ -78,6 +93,10 @@ public:
   // costruisco un albero casuale con n nodi
   ztree( ) {
     random_tree( V );
+  }
+
+  ztree( Random& gen ) {
+    random_tree( V, gen );
   }
 
   // costruttore di copia

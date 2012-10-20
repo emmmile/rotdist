@@ -1,0 +1,3 @@
+[submodule "random"]
+	path = random
+	url = git@github.com:emmmile/random.git
