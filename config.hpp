@@ -2,6 +2,6 @@
 #define CONFIG_HPP
 
 
-#define N 16
+#define N 14
 
 #endif // CONFIG_HPP
