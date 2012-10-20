@@ -85,9 +85,13 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
 
 
 void testfunctions ( size_t runs ) {
-  for (size_t i = 0; i < runs; ++i ) {
-    ztree<N> a;
-    ztree<N> b;
+  size_t i;
+  Random gen( (int) &i );
+
+
+  for (i = 0; i < runs; ++i ) {
+    ztree<N> a( gen );
+    ztree<N> b( gen );
     ptree<int> aa( a ), aaa( a );
     ptree<int> bb( b ), bbb( b );
 
