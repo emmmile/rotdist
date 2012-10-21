@@ -8,20 +8,23 @@
 #include <deque>
 #include <algorithm>
 #include <thread>
-#include <unordered_set>
+//#include <unordered_set>
 #include "config.hpp"
 #include "ztree.hpp"
 #include "ptree.hpp"
+#include "khash.hh"
 using namespace std;
 using namespace tree;
 
+template<class T>
+class unordered_set : public khset_t<T> {};
 
 
 size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   visited = 0;
 
   if ( a == b ) return 0;
-  unordered_set<unsigned long> queued( 100 );
+  unordered_set<unsigned long> queued;
   deque<ztree<N> > q;
   q.push_back( a );
   queued.insert( a.to_ulong() );
@@ -45,7 +48,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
       newone ^ i;
 
       // if I already queued (or visited) this node I simply skip it
-      if ( queued.count( newone.to_ulong() ) > 0 )
+      if ( queued.find( newone.to_ulong() ) != queued.end() )
         continue;
 
       // if I found it, exit from the loops
@@ -74,7 +77,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
 
   if (!found) {
       cerr << "Fatal error.\n";
-      cout << queued.count( a.to_ulong() ) << " " << queued.count( b.to_ulong() ) << endl;
+      //cout << queued.count( a.to_ulong() ) << " " << queued.count( b.to_ulong() ) << endl;
       exit( 1 );
   }
 
@@ -86,7 +89,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
 
 void testfunctions ( size_t runs ) {
   size_t i;
-  Random gen( (int) &i );
+  Random gen( 0 );// (unsigned long) &i );
 
 
   for (i = 0; i < runs; ++i ) {
