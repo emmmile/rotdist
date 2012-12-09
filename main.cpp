@@ -10,83 +10,14 @@
 #include <thread>
 //#include <unordered_set>
 #include "config.hpp"
-#include "ztree.hpp"
-#include "ptree.hpp"
-#include "khash.hh"
+#include "algo.hpp"
 using namespace std;
 using namespace tree;
 
-template<class T>
-class unordered_set : public khset_t<T> {};
-
-
-size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
-  visited = 0;
-
-  if ( a == b ) return 0;
-  unordered_set<unsigned long> queued;
-  deque<ztree<N> > q;
-  q.push_back( a );
-  queued.insert( a.to_ulong() );
-
-  // During BFS I scan sequentially all nodes at distance d, exploring the next level d+1.
-  // I set two extremes for two sets:
-  //   [0,left)       contains the nodes at distance d, d-1, d-2.. 0 from the source node a
-  //   [left,right)   contains the nodes at distance d+1 from a
-  // When [0,left) = [0,0) means that I have exhausted all the nodes at distance d, d-1..
-  // that means I generated all the nodes on the next level, so I can increase the distance
-  // from the source.
-  int left = 1;      // Initially I have node a at distance 0 from a, so [0,left) must contain only node 0
-  int right = 1;     // The right limit is the left limit: I have no known node at distance 1
-  size_t d = 0;      // distance from a in the current level
-  bool found = false;
-
-  while( q.size() != 0 ) {
-    // select first node in the deque and generates its outcoming star
-    for ( unsigned int i = 1; i <= N; ++i ) {
-      ztree<N> newone = q.front();
-      newone ^ i;
-
-      // if I already queued (or visited) this node I simply skip it
-      if ( queued.find( newone.to_ulong() ) != queued.end() )
-        continue;
-
-      // if I found it, exit from the loops
-      if ( newone == b ) {
-        found = true;
-        break;
-      }
-
-      // otherwise put the new node in the deque and to the hashtable
-      q.push_back( newone );
-      queued.insert( newone.to_ulong() );
-      right++;
-    }
-
-    if ( found ) break;
-
-    // effectively pop the first element, after visiting him
-    q.pop_front();
-    --right;
-    // start processing elements at the next level?
-    if ( --left == 0 ) {
-      left = right;
-      ++d;
-    }
-  }
-
-  if (!found) {
-      cerr << "Fatal error.\n";
-      //cout << queued.count( a.to_ulong() ) << " " << queued.count( b.to_ulong() ) << endl;
-      exit( 1 );
-  }
-
-  visited = queued.size();
-  return d + 1;
-}
 
 
 
+/*
 void testfunctions ( size_t runs ) {
   size_t i;
   Random gen( 0 );// (unsigned long) &i );
@@ -108,13 +39,36 @@ void testfunctions ( size_t runs ) {
     assert( aaa == bbb );
     assert( toptimal <= tdistance );
 
+
+    if ( toptimal < tdistance )
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << toldistance << "\t" << visited << endl;
   }
 }
-
+*/
 
 int main ( int argv, char** argc ) {
-  if ( argv < 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  while ( true ) {
+    Random gen( 0 );// (unsigned long) &i );
+    ztree<N> a( gen );
+    ztree<N> b( gen );
+    ptree<int> aa( a );
+    ptree<int> bb( b );
+
+    //print<int>( aa, bb );
+    int one = test( aa, bb );
+    //int two = aaa.make_all_equivalent( bbb );
+    //if ( one != two ) {
+    //print<int>( aa, bb );
+
+    size_t visited;
+    cout << one << " vs " << distance(a, b, visited ) << endl;
+    //getchar();
+    //}
+  }
+
+
+
+  /*if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 
@@ -131,7 +85,7 @@ int main ( int argv, char** argc ) {
   //Join the threads with the main thread
   for( auto& i : t ) i.join();
 
-	return 0;
+        return 0;*/
 }
 
 

@@ -361,7 +361,7 @@ class print {
   }
 
   print( const ptree<T>& t, equivalence_info<T>& info ): width( 0 ) {
-    print_tree( out, t.get(), t.base(), &info );
+    print_tree( out, &(t[t.root()]), t.base(), &info );
   }
 
 public:
@@ -375,7 +375,7 @@ public:
     t.equal_subtrees( s, eqinfo );
 
 
-    print_tree( out, t.get(), t.base(), &eqinfo );
+    print_tree( out, &(t[t.root()]), t.base(), &eqinfo );
     print<T> second( s, eqinfo.inverse() );
     merge( second );
     stream << out.str();
