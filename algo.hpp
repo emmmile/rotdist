@@ -71,25 +71,6 @@ T central ( ptree<T>& s, info& eqinfo ) {
 }
 
 
-T centralfirststep ( ptree<T>& s, info& eqinfo ) {
-  assert( s.__size == __size );
-  T total = 0;
-
-  // cerco il nodo con c(x) massimo
-  T selected = EMPTY, cmax = 0, rx = size();
-  best_c( s, eqinfo, root, cmax, selected, rx, greater<T>() );
-
-  if ( cmax == 0 )
-    return total;
-
-  // porto il nodo selezionato alla radice in entrambi gli alberi
-  total +=   to_root( selected );
-  total += s.to_root( selected );
-
-  return total;
-}
-
-
 T centralsecondstep ( ptree<T>& s, info& eqinfo ) {
   assert( s.__size == __size );
   T total = 0;
@@ -101,12 +82,26 @@ T centralsecondstep ( ptree<T>& s, info& eqinfo ) {
   total += s.list( s.nodes[s.root].left(), eqinfo.inverse(), RIGHT );
 
   return total;
+}*/
+
+template<class T>
+T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
+  assert( a.size() == b.size() );
+  T total = 0;
+
+  // cerco il nodo con c(x) massimo
+  T selected = EMPTY, cmax = 0, rx = a.size();
+  a.best_c( b, eqinfo, a.root(), cmax, selected, rx, greater<T>() );
+
+  if ( cmax == 0 )
+    return total;
+
+  // porto il nodo selezionato alla radice in entrambi gli alberi
+  total += a.to_root( selected );
+  total += b.to_root( selected );
+
+  return total;
 }
-*/
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +110,54 @@ T centralsecondstep ( ptree<T>& s, info& eqinfo ) {
 
 
 
+template<class T>
+T newalgo ( ptree<T>& a, ptree<T>& b ) {
+  assert( a.size() == b.size() );
 
+  T total = 0;
+  equivalence_info<T> eqinfo( a.size() );
+
+  // cerco di staccare nodi 1-equivalenti finche' posso
+  total += k_equivalent(a, b);
+
+  // porto a radice il nodo x con c(x) massimo
+  a.equal_subtrees( b, eqinfo );
+  total += centralfirststep( a, b, eqinfo );
+  a.equal_subtrees( b, eqinfo );
+
+  // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
+  // guardo se posso staccare altri nodi 1-equivalenti
+  total += k_equivalent(a, b);
+
+  a.equal_subtrees( b, eqinfo );
+  simple_set<T> equivalent( eqinfo );
+
+  // 2. On every equivalent subtree it executes the processing
+  for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ) {
+    ptree<T> aa( a.subtree( *i ), true );
+    ptree<T> bb( b.subtree( eqinfo[*i] ), true );
+
+    // porto il nodo x con c(x) massimo a radice anche in questo sottoalbero (creando nuovi nodi equivalenti)
+    total += centralfirststep( aa, bb, eqinfo );
+
+    // ricontrollo se posso staccare altri nodi 1-equivalenti (chiamo sempre su tutto l'albero
+    // perche' la make_all_equivalent e' progettata cosi'
+    total += k_equivalent(a, b);
+
+    // and updates the equivalence informations
+    a.equal_subtrees( b, eqinfo );
+    equivalent.update( eqinfo );
+
+    if ( eqinfo[*i] == *i ) ++i;
+  }
+
+  return total;
+}
+
+
+
+
+/*
 template<class T>
 T handle_semi_equivalent( ptree<T>& a, ptree<T>& b ) {
   T total = 0, operations;
@@ -130,8 +172,35 @@ T handle_semi_equivalent( ptree<T>& a, ptree<T>& b ) {
   return total;
 }
 
+template<class T>
+T make_equivalent ( ptree<T>& a, ptree<T>& b ) {
+  T total = 0;
+  T size = a.size();
 
-/*
+  for ( T i = a[a.root()].minvalue; i <= a[a.root()].maxvalue; ++i ) {
+    if ( i == a.root() ) continue;
+
+    equivalence_info<T> eqinfo( size );
+    T before = a.equal_subtrees( b, eqinfo );
+    T father = a[i].father();
+    if ( eqinfo[i] != EMPTY ) continue;
+
+    a.up( i );
+    T after = a.equal_subtrees( b, eqinfo );
+
+    // restore, else keep
+    if ( after == before ) a.rotate( father, i );
+    else {
+      total++;
+      cout << i << " ";
+    }
+  }
+
+  cout << endl;
+  return total;
+}
+
+
 // cerca un nodo nell'albero s, che abbia il solito intervallo del nodo value in this.
 bool existSameInterval( ptree<T>& a, T svalue, ptree<T>& b, info& eqinfo, T value ) {
   if ( sameInterval( nodes[value], s.nodes[svalue] ) )
@@ -198,88 +267,10 @@ T make_equivalent ( ptree<T>& s, bool verbose = false ) {
   if ( verbose ) cout << "found: " << rset << endl;
   return up_all( rset );
 }
+*/
 
 
 
-template<class T>
-T newalgo ( ptree<T>& s ) {
-  if ( s.__size != __size ) {
-    cerr << "Not compatible trees in distance()\n";
-    return 0;
-  }
-
-  T total = 0;
-  info eqinfo( __size );
-
-  // cerco di staccare nodi 1-equivalenti finche' posso
-  total += make_all_equivalent( s );
-
-  // porto a radice il nodo x con c(x) massimo
-  equal_subtrees( s, eqinfo );
-  total += centralfirststep( s, eqinfo );
-  equal_subtrees( s, eqinfo );
-
-  // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
-  // guardo se posso staccare altri nodi 1-equivalenti
-  total += make_all_equivalent( s );
-
-  equal_subtrees( s, eqinfo );
-  simple_set<T> equivalent( eqinfo );
-
-  // 2. On every equivalent subtree it executes the processing
-  for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ) {
-    ptree<T> tt( subtree( *i ), true );
-    ptree<T> ss( s.subtree( eqinfo[*i] ), true );
-
-    // porto il nodo x con c(x) massimo a radice anche in questo sottoalbero (creando nuovi nodi equivalenti)
-    total += tt.centralfirststep( ss, eqinfo );
-
-    // ricontrollo se posso staccare altri nodi 1-equivalenti (chiamo sempre su tutto l'albero
-    // perche' la make_all_equivalent e' progettata cosi'
-    total += make_all_equivalent( s );
-
-    // and updates the equivalence informations
-    equal_subtrees( s, eqinfo );
-    equivalent.update( eqinfo );
-
-    if ( eqinfo[*i] == *i ) ++i;
-  }
-
-  return total;
-}*/
-
-
-
-
-
-
-template<class T>
-T make_equivalent ( ptree<T>& a, ptree<T>& b ) {
-  T total = 0;
-  T size = a.size();
-
-  for ( T i = a[a.root()].minvalue; i <= a[a.root()].maxvalue; ++i ) {
-    if ( i == a.root() ) continue;
-
-    equivalence_info<T> eqinfo( size );
-    T before = a.equal_subtrees( b, eqinfo );
-    T father = a[i].father();
-    if ( eqinfo[i] != EMPTY ) continue;
-
-    a.up( i );
-    T after = a.equal_subtrees( b, eqinfo );
-
-    // restore, else keep
-    if ( after == before ) a.rotate( father, i );
-    else {
-      total++;
-      cout << i << " ";
-    }
-  }
-
-  cout << endl;
-  return total;
-}
 
 
 
@@ -292,8 +283,8 @@ T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& e
     // this is the condition for the operation to be kept
     // holds if the initial k is less than 4, that is deleting 2 subtrees
     // with up to 3 rotations reduce the rotations bound
-    T threshold = kin == 1 ? 1 : 2;
-    if ( after >= before + threshold ) return 1;
+    T threshold = (kin == 1 ? 1 : 2);
+    if ( after - before >= threshold ) return 1;
     else return 0;
   }
 
@@ -314,7 +305,10 @@ T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& e
       a.rotate( father, i );
     } else {
       // else I want to keep
-      return rots + 1;
+      if ( kin == k )
+        return rots;
+      else
+        return rots + 1;
     }
   }
 
@@ -335,10 +329,10 @@ T handle_k_equivalence ( ptree<T>& a, ptree<T>& b, T k ) {
   if ( before == a.size() - 1 ) return 0;
 
   T total = handle_k_equivalence_r( a, b, k, eqinfo, before, k );
-  if ( total != 0 ) return total - 1;
+  if ( total != 0 ) return total;
 
-  total = handle_k_equivalence_r( b, a, k, eqinfo, before, k );
-  if ( total != 0 ) return total - 1;
+    total = handle_k_equivalence_r( b, a, k, eqinfo, before, k );
+  if ( total != 0 ) return total;
 
   return 0;
 }
@@ -346,16 +340,17 @@ T handle_k_equivalence ( ptree<T>& a, ptree<T>& b, T k ) {
 
 
 template<class T>
-T test ( ptree<T>& a, ptree<T>& b ) {
+T k_equivalent ( ptree<T>& a, ptree<T>& b ) {
   T total = 0;
   T k = 1;
 
-  while ( k <= 3 ) {
+  while ( k <= 2 ) {
     T op = handle_k_equivalence(a,b,k);
 
     if ( op == 0 )
       k++;
     else {
+      if ( op == 2 ) cout << op << endl;
       total += op;
       k = 1;
     }
@@ -363,34 +358,6 @@ T test ( ptree<T>& a, ptree<T>& b ) {
 
   return total;
 }
-
-
-/*T make_all_2_equivalent( ptree<T>& s ) {
-  T total = 0, operations;
-  do {
-    do {
-      operations = 0;
-      cout << "on T: ";
-      operations += another_make_equivalent(s);
-      cout << "on S: ";
-      operations += s.another_make_equivalent(*this);
-
-      total += operations;
-    } while ( operations != 0 );
-
-
-    //operations = 0;
-    operations += perform_one_2_equivalent(s);
-    if ( operations == 0 )
-      operations += s.perform_one_2_equivalent(*this);
-
-    total += operations;
-  } while ( operations != 0 );
-
-  return total;
-}*/
-
-
 
 
 
