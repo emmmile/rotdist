@@ -21,6 +21,7 @@ using namespace tree;
 void test_algorithms ( size_t runs ) {
   size_t i;
   Random gen( 0 );// (unsigned long) &i );
+  double optimal = 0, algonew = 0;
 
 
   for (i = 0; i < runs; ++i ) {
@@ -34,6 +35,8 @@ void test_algorithms ( size_t runs ) {
     toptimal = distance(a, b, visited );
     tdistance = newalgo( aa, bb );
     //toldistance = aaa.oldistance( bbb );
+    algonew += tdistance;
+    optimal += toptimal;
 
     assert( aa == bb );
     //assert( aaa == bbb );
@@ -42,6 +45,9 @@ void test_algorithms ( size_t runs ) {
     //if ( toptimal < tdistance )
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" /*<< toldistance << "\t"*/ << visited << endl;
   }
+
+  cout << "OPTIMAL AVG = " << optimal / runs << endl;
+  cout << "NEWALGO AVG = " << algonew / runs << endl;
 }
 
 
