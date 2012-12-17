@@ -148,7 +148,6 @@ public:
     return s;
   }
 
-
   unsigned long to_ulong ( ) const {
     return tree.to_ulong();
   }

@@ -6,6 +6,8 @@
 #include "ztree.hpp"
 #include "khash.hh"
 
+
+namespace tree {
 ////////////////////////////////////////////////////////////////////////////////
 // Central algorithm and stuff
 ////////////////////////////////////////////////////////////////////////////////
@@ -350,7 +352,14 @@ T k_equivalent ( ptree<T>& a, ptree<T>& b ) {
     if ( op == 0 )
       k++;
     else {
-      if ( op == 2 ) cout << op << endl;
+      if ( op == 2 ) {
+        cout << "step with k = 2\n";
+        //print<T>(a,b);
+      }
+      if ( op == 3 ) {
+        cout << "step with k = 3\n";
+        //print<T>(a,b);
+      }
       total += op;
       k = 1;
     }
@@ -399,7 +408,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   unordered_set<unsigned long> queued;
   deque<ztree<N> > q;
   q.push_back( a );
-  queued.insert( a.to_ulong() );
+  queued.insert( (int) a.to_ulong() );
 
   // During BFS I scan sequentially all nodes at distance d, exploring the next level d+1.
   // I set two extremes for two sets:
@@ -456,5 +465,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   visited = queued.size();
   return d + 1;
 }
+
+} // namespace tree
 
 #endif // ALGO_HPP

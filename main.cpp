@@ -39,15 +39,15 @@ void test_algorithms ( size_t runs ) {
     //assert( aaa == bbb );
     assert( toptimal <= tdistance );
 
-    if ( toptimal < tdistance )
+    //if ( toptimal < tdistance )
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" /*<< toldistance << "\t"*/ << visited << endl;
   }
 }
 
 
 int main ( int argv, char** argc ) {
-  /*ztree<7> a( "110101100110000" );
-  ztree<7> b( "111101001001000" );
+  /*tree<11> a( "11100110001110001101000" );
+  ztree<11> b( "11100011101100100011000" );
   ptree<int> aa( a );//, aaa( a );
   ptree<int> bb( b );//, bbb( b );
   print<int>( aa, bb, cout );

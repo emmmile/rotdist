@@ -143,6 +143,7 @@ inline uint32_t __ac_Wang_hash_int(uint32_t key)
 struct khashf_t {
 	inline khashint_t operator () (uint16_t key) const { return key; }
 	inline khashint_t operator () (uint32_t key) const { return key; }
+  inline khashint_t operator () (unsigned long int key) const { return key; }
 	inline khashint_t operator () (int key) const { return key; }
 	inline khashint_t operator () (uint64_t key) const { return uint32_t(key>>19) ^ uint32_t(key); }
 	inline khashint_t operator () (const char *p) const { return __ac_X31_hash_string(p); }
@@ -161,6 +162,7 @@ struct khashf2_t {
 struct khasheq_t {
 	inline bool operator () (uint16_t a, uint16_t b) const { return a == b; }
 	inline bool operator () (uint32_t a, uint32_t b) const { return a == b; }
+  inline bool operator () (unsigned long int a, unsigned long int b) const { return a == b; }
 	inline bool operator () (int a, int b) const { return a == b; }
 	inline bool operator () (uint64_t a, uint64_t b) const { return a == b; }
 	inline bool operator () (const char *a, const char *b) const { return strcmp(a, b) == 0; }
@@ -452,7 +454,7 @@ public:
 	inline inspair_t insert(const keytype_t &key) {
 		__ac_hash_base_class<keytype_t>::rehash();
 		khashint_t i;
-		int ret = direct_insert_aux(key, this->n_capacity, this->keys, this->flags, &i);
+    int ret = this->direct_insert_aux(key, this->n_capacity, this->keys, this->flags, &i);
 		if (ret == 0) return inspair_t(iterator(i, this->keys, this->flags), false);
 		if (ret == 1) { ++(this->n_size); ++(this->n_occupied); }
 		else ++(this->n_size); // then ret == 2
