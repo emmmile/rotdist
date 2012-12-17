@@ -18,9 +18,9 @@ using namespace tree;
 
 
 
-void test_algorithms ( size_t runs ) {
+void test_algorithms ( size_t runs, int index ) {
   size_t i;
-  Random gen( 0 );// (unsigned long) &i );
+  Random gen( index );// (unsigned long) &i );
   double optimal = 0, algonew = 0;
 
 
@@ -71,7 +71,7 @@ int main ( int argv, char** argc ) {
   //Launch a group of threads
   for (int i = threads; i > 0; --i) {
     size_t part = runs / i;
-    t.push_back( thread( test_algorithms, part ) );
+    t.push_back( thread( test_algorithms, part, i ) );
     runs -= part;
   }
 
