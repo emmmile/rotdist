@@ -21,7 +21,7 @@ using namespace tree;
 void test_algorithms ( size_t runs, int index ) {
   size_t i;
   Random gen( index );// (unsigned long) &i );
-  double optimal = 0, algonew = 0;
+  //double optimal = 0, algonew = 0;
 
 
   for (i = 0; i < runs; ++i ) {
@@ -35,8 +35,8 @@ void test_algorithms ( size_t runs, int index ) {
     toptimal = distance(a, b, visited );
     tdistance = newalgo( aa, bb );
     //toldistance = aaa.oldistance( bbb );
-    algonew += tdistance;
-    optimal += toptimal;
+    //algonew += tdistance;
+    //optimal += toptimal;
 
     assert( aa == bb );
     //assert( aaa == bbb );
@@ -46,8 +46,8 @@ void test_algorithms ( size_t runs, int index ) {
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" /*<< toldistance << "\t"*/ << visited << endl;
   }
 
-  cout << "OPTIMAL AVG = " << optimal / runs << endl;
-  cout << "NEWALGO AVG = " << algonew / runs << endl;
+  //cout << "OPTIMAL AVG = " << optimal / runs << endl;
+  //cout << "NEWALGO AVG = " << algonew / runs << endl;
 }
 
 
@@ -71,7 +71,8 @@ int main ( int argv, char** argc ) {
   //Launch a group of threads
   for (int i = threads; i > 0; --i) {
     size_t part = runs / i;
-    t.push_back( thread( test_algorithms, part, i ) );
+    int j = i;
+    t.push_back( thread( test_algorithms, part, j ) );
     runs -= part;
   }
 
