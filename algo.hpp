@@ -423,6 +423,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   bool found = false;
 
   while( q.size() != 0 ) {
+      if ( q.size() > visited ) visited = q.size();
     // select first node in the deque and generates its outcoming star
     for ( unsigned int i = 1; i <= N; ++i ) {
       ztree<N> newone = q.front();
@@ -462,7 +463,7 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
       exit( 1 );
   }
 
-  visited = queued.size();
+  //visited = queued.size();
   return d + 1;
 }
 
