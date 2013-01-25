@@ -71,6 +71,9 @@ protected:
     allocated = false;
   }
 
+
+public:
+
   // effettua una rotazione di un nodo a sinistra o a destra
   void rotate ( T value, rotation_type type ) {
     node<T>* u = nodes + value;
@@ -147,7 +150,6 @@ protected:
     return total;
   }
 
-public:
   typedef T node_type;
 
 

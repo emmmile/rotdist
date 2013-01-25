@@ -12,11 +12,11 @@ namespace tree {
 // Central algorithm and stuff
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
+
 // porta il sottolbero radicato in x in una catena sinistra o destra a seconda di type
 // (algoritmi LEFT e RIGHT). Restituisce -1 in caso di errore, oppure 0 se l'albero e' nullo
 template<class T>
-T list ( ptree<T>& a, T i, info& eqinfo, rotation_type type = LEFT ) {
+T list ( ptree<T>& a, T i, equivalence_info<T>& eqinfo, rotation_type type = LEFT ) {
   if ( i == EMPTY ) return 0;
 
   T total = 0;
@@ -26,65 +26,48 @@ T list ( ptree<T>& a, T i, info& eqinfo, rotation_type type = LEFT ) {
     T j = i;
     while ( ( type == RIGHT && a.phi( j, eqinfo ) != 0 ) ||
             ( type == LEFT && a.gamma( j, eqinfo ) != 0 ) ) {
-      next = ( type == LEFT ) ? nodes[j].right() : nodes[j].left();
+      next = ( type == LEFT ) ? a.base()[j].right() : a.base()[j].left();
 
       a.rotate( j, type );
       ++total;
-
 
       j = next;
     }
 
     // l'ultimo nodo che ho ruotato (oppure i invariato) e' quello da cui devo scendere
-    i = ( type == LEFT ) ? nodes[next].left() : nodes[next].right();
+    i = ( type == LEFT ) ? a.base()[next].left() : a.base()[next].right();
   }
 
   return total;
 }
 
 // processing basato sull'algoritmo CENTRAL
-T central ( ptree<T>& s, info& eqinfo ) {
-  if ( s.__size != __size ) {
-    cerr << "central(): invalid subtrees.\n" << endl;
-    return -1;
-  }
+template<class T>
+T central ( ptree<T>& a, ptree<T>& b ) {
 
+  assert( a.size() == b.size() );
+  equivalence_info<T> eqinfo( a.size() );
   T total = 0;
 
   // cerco il nodo con c(x) massimo
-  T selected = EMPTY, cmax = 0, rx = size();
-  best_c( s, eqinfo, root, cmax, selected, rx, greater<T>() );
-//    printf( "Selected node %d with c = %d.\n", selected, cmax );
+  T selected = EMPTY, cmax = 0, rx = a.size();
+  a.best_c( b, eqinfo, a.root(), cmax, selected, rx, greater<T>() );
 
   if ( cmax == 0 )
     return total;
 
   // porto il nodo selezionato alla radice in entrambi gli alberi
-  total +=   to_root( selected );
-  total += s.to_root( selected );
+  total += a.to_root( selected );
+  total += b.to_root( selected );
 
   // applico gli algoritmi left e right ai sottoalberi
-  total +=   list(   nodes[selected].right(), eqinfo, LEFT );
-  total += s.list( s.nodes[selected].right(), eqinfo.inverse(), LEFT );
-  total +=   list(   nodes[selected].left(), eqinfo, RIGHT );
-  total += s.list( s.nodes[selected].left(), eqinfo.inverse(), RIGHT );
+  total += list( a, a.base()[selected].right(), eqinfo, LEFT );
+  total += list( b, b.base()[selected].right(), eqinfo.inverse(), LEFT );
+  total += list( a, a.base()[selected].left(), eqinfo, RIGHT );
+  total += list( b, b.base()[selected].left(), eqinfo.inverse(), RIGHT );
 
   return total;
 }
-
-
-T centralsecondstep ( ptree<T>& s, info& eqinfo ) {
-  assert( s.__size == __size );
-  T total = 0;
-
-  // applico gli algoritmi left e right ai sottoalberi
-  total +=   list(   nodes[root].right(), eqinfo, LEFT );
-  total += s.list( s.nodes[s.root].right(), eqinfo.inverse(), LEFT );
-  total +=   list(   nodes[root].left(), eqinfo, RIGHT );
-  total += s.list( s.nodes[s.root].left(), eqinfo.inverse(), RIGHT );
-
-  return total;
-}*/
 
 template<class T>
 T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
@@ -110,6 +93,14 @@ T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 // New algorithm and stuff
 ////////////////////////////////////////////////////////////////////////////////
 
+
+template<class T>
+bool has_equivalent ( ptree<T>& a, ptree<T>& b ) {
+  assert( a.size() == b.size() );
+
+  equivalence_info<T> eqinfo( a.size() );
+  return a.equal_subtrees( b, eqinfo ) != 0;
+}
 
 
 template<class T>

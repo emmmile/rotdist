@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <cassert>
 #include <deque>
+#include <fstream>
 #include <algorithm>
 #include <thread>
 //#include <unordered_set>
@@ -27,14 +28,16 @@ void test_algorithms ( size_t runs, int index ) {
   for (i = 0; i < runs; ++i ) {
     ztree<N> a( gen );
     ztree<N> b( gen );
-    ptree<int> aa( a );//, aaa( a );
-    ptree<int> bb( b );//, bbb( b );
+    ptree<int> aa( a ), aaa( a );
+    ptree<int> bb( b ), bbb( b );
+
+    if ( has_equivalent(aa,bb) ) continue; // only very bad trees
 
     size_t visited;
-    int toptimal, tdistance;//, toldistance;
+    int toptimal, tdistance, tcentral;
     toptimal = distance(a, b, visited );
     tdistance = newalgo( aa, bb );
-    //toldistance = aaa.oldistance( bbb );
+    tcentral = central( aaa, bbb );
     //algonew += tdistance;
     //optimal += toptimal;
 
@@ -43,7 +46,7 @@ void test_algorithms ( size_t runs, int index ) {
     assert( toptimal <= tdistance );
 
     //if ( toptimal < tdistance )
-    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" /*<< toldistance << "\t"*/ << visited << endl;
+    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tcentral << "\t" << visited << endl;
   }
 
   //cout << "OPTIMAL AVG = " << optimal / runs << endl;
@@ -52,20 +55,35 @@ void test_algorithms ( size_t runs, int index ) {
 
 
 int main ( int argv, char** argc ) {
-  /*tree<11> a( "11100110001110001101000" );
-  ztree<11> b( "11100011101100100011000" );
-  ptree<int> aa( a );//, aaa( a );
-  ptree<int> bb( b );//, bbb( b );
-  print<int>( aa, bb, cout );
+  ifstream ifs( "17.new.txt" );
+  string temp;
 
-  cout << newalgo( aa, bb ) << endl;
-  return 0;*/
+  getline( ifs, temp ); //skip first
+  while ( getline( ifs, temp ) ) {
+    int index = temp.find_first_of('\t');
 
-  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+    string a = temp.substr( 0, index );
+    string b = temp.substr( index + 1, 35 );
+
+    ztree<17> aa( a );
+    ztree<17> bb( b );
+
+    ptree<int> aaa( aa );
+    ptree<int> bbb( bb );
+
+    if ( !has_equivalent(aaa, bbb) ) {
+      cout << temp.substr( 0, temp.find_last_of("\t") ) << "\t";
+      cout << central( aaa, bbb ) << endl;
+    }
+  }
+
+  return 0;
+
+  /*if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 
-  cout << "first\tsecond\topt\tdist\tvisited\n";
+  cout << "first\tsecond\topt\tdist\tcentral\tvisited\n";
   vector<thread> t;
 
   //Launch a group of threads
@@ -79,7 +97,7 @@ int main ( int argv, char** argc ) {
   //Join the threads with the main thread
   for( auto& i : t ) i.join();
 
-    return 0;
+    return 0;*/
 }
 
 

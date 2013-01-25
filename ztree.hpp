@@ -137,7 +137,7 @@ public:
 
     // nel caso abbia trovato una lettera e la stringa attuale non sia valida
     if ( ( s.size() != 2 * V + 1 ) || ( z != o + 1 && i != s.size() - 1 ) )
-      cerr << "Error in ztree constructor.\n";
+      cerr << "Error in ztree constructor: size is " << s.size() << ", expected " << 2 * V + 1 << "\n";
   }
 
 
