@@ -31,7 +31,7 @@ void test_algorithms ( size_t runs, int index ) {
     ptree<int> aa( a ), aaa( a );
     ptree<int> bb( b ), bbb( b );
 
-    if ( has_equivalent(aa,bb) ) continue; // only very bad trees
+    if ( has_equivalent(aa,bb) ) { --i; continue; } // only very bad trees
 
     size_t visited;
     int toptimal, tdistance, tcentral;
@@ -55,7 +55,7 @@ void test_algorithms ( size_t runs, int index ) {
 
 
 int main ( int argv, char** argc ) {
-  ifstream ifs( "17.new.txt" );
+  /*ifstream ifs( "17.new.txt" );
   string temp;
 
   getline( ifs, temp ); //skip first
@@ -77,9 +77,9 @@ int main ( int argv, char** argc ) {
     }
   }
 
-  return 0;
+  return 0;*/
 
-  /*if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 
@@ -97,7 +97,7 @@ int main ( int argv, char** argc ) {
   //Join the threads with the main thread
   for( auto& i : t ) i.join();
 
-    return 0;*/
+    return 0;
 }
 
 
