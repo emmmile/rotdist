@@ -9,13 +9,14 @@
 #include <fstream>
 #include <algorithm>
 #include <thread>
+#include <mutex>
 //#include <unordered_set>
 #include "config.hpp"
 #include "algo.hpp"
 using namespace std;
 using namespace tree;
 
-
+mutex output_mutex;
 
 
 
@@ -45,9 +46,11 @@ void test_algorithms ( size_t runs, int index ) {
     //assert( aaa == bbb );
     assert( toptimal <= tdistance );
 
+    output_mutex.lock();
     //if ( toptimal < tdistance )
     cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tcentral << "\t" << visited << endl;
-  }
+    output_mutex.unlock();  
+}
 
   //cout << "OPTIMAL AVG = " << optimal / runs << endl;
   //cout << "NEWALGO AVG = " << algonew / runs << endl;
