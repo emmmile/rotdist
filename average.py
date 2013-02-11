@@ -12,14 +12,15 @@ def statistics ( f ):
     num += 1
     if num == 1:
       continue
-    opt, alg, cen = l.split()[2:] #[:-1]
+    (opt, alg, cen), rest = l.split()[2:5], l.split()[5:]
     sopt += int( opt )
     vopt += int( opt ) * int( opt )
     salg += int( alg )
     valg += int( alg ) * int( alg )
     scen += int( cen )
     vcen += int( cen ) * int( cen )
-  
+
+  print( f )  
   print( "algo\taverage\t\tvariance" )
   print( "opt\t{0}\t{1}".format( sopt / float( num ), math.sqrt( vopt / float( num ) - ( sopt / float( num ) ) ** 2 ) ) )
   print( "new\t{0}\t{1}".format( salg / float( num ), math.sqrt( valg / float( num ) - ( salg / float( num ) ) ** 2 ) ) )
