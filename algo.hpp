@@ -89,6 +89,26 @@ T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 }
 
 
+template<class T>
+T movebestr ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
+  assert( a.size() == b.size() );
+  T total = 0;
+
+  // cerco il nodo con c(x) massimo
+  T selected = EMPTY, cmax = 0, rx = a.size();
+  a.best_r( b, eqinfo, a.root(), cmax, selected, greater<T>() );
+
+  if ( cmax == 0 )
+    return total;
+
+  // porto il nodo selezionato alla radice in entrambi gli alberi
+  total += a.to_root( selected );
+  total += b.to_root( selected );
+
+  return total;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // New algorithm and stuff
 ////////////////////////////////////////////////////////////////////////////////
@@ -146,6 +166,62 @@ T newalgo ( ptree<T>& a, ptree<T>& b ) {
 
   return total;
 }
+
+
+
+
+
+
+
+template<class T>
+T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
+  assert( a.size() == b.size() );
+
+  T total = 0;
+  equivalence_info<T> eqinfo( a.size() );
+
+  // cerco di staccare nodi 1-equivalenti finche' posso
+  total += k_equivalent(a, b);
+
+  // porto a radice il nodo x con c(x) massimo
+  a.equal_subtrees( b, eqinfo );
+  total += movebestr( a, b, eqinfo );
+  a.equal_subtrees( b, eqinfo );
+
+  // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
+  // guardo se posso staccare altri nodi 1-equivalenti
+  total += k_equivalent(a, b);
+
+  a.equal_subtrees( b, eqinfo );
+  simple_set<T> equivalent( eqinfo );
+
+  // 2. On every equivalent subtree it executes the processing
+  for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ) {
+    ptree<T> aa( a.subtree( *i ), true );
+    ptree<T> bb( b.subtree( eqinfo[*i] ), true );
+
+    // porto il nodo x con c(x) massimo a radice anche in questo sottoalbero (creando nuovi nodi equivalenti)
+    total += movebestr( aa, bb, eqinfo );
+
+    // ricontrollo se posso staccare altri nodi 1-equivalenti (chiamo sempre su tutto l'albero
+    // perche' la make_all_equivalent e' progettata cosi'
+    total += k_equivalent(a, b);
+
+    // and updates the equivalence informations
+    a.equal_subtrees( b, eqinfo );
+    equivalent.update( eqinfo );
+
+    if ( eqinfo[*i] == *i ) ++i;
+  }
+
+  return total;
+}
+
+
+
+
+
+
 
 
 
@@ -276,7 +352,7 @@ T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& e
     // this is the condition for the operation to be kept
     // holds if the initial k is less than 4, that is deleting 2 subtrees
     // with up to 3 rotations reduce the rotations bound
-    T threshold = (kin == 1 ? 1 : 2);
+    T threshold = (kin == 1 ? 1 : 1);
     if ( after - before >= threshold ) return 1;
     else return 0;
   }
@@ -344,7 +420,7 @@ T k_equivalent ( ptree<T>& a, ptree<T>& b ) {
       k++;
     else {
       if ( op == 2 ) {
-        cout << "step with k = 2\n";
+        //cout << "step with k = 2\n";
         //print<T>(a,b);
       }
       if ( op == 3 ) {

@@ -38,7 +38,7 @@ void test_algorithms ( size_t runs, int index ) {
     int toptimal, tdistance, tcentral;
     toptimal = distance(a, b, visited );
     tdistance = newalgo( aa, bb );
-    tcentral = central( aaa, bbb );
+    tcentral = newbetteralgo( aaa, bbb );
     //algonew += tdistance;
     //optimal += toptimal;
 

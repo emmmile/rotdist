@@ -435,6 +435,40 @@ public:
     return out;
   }
 
+
+
+
+
+    // cerca il nodo con il cx piu' piccolo (o piu' grande) fra this e s.
+  // cval     the minimal cx found
+  // selected the correspondent node
+  template<class Comp = less<T> >
+  void best_r ( ptree<T>& s, info& eqinfo, T value, T& cval, T& selected, Comp comp = Comp() ) {
+    // compute c for the current node
+    T current = r( value, eqinfo ) + s.r( value, eqinfo.inverse() );
+    if ( comp( current, cval ) ) {  // it means: current < cval, if comp is <
+      selected = value;
+      cval = current;
+    }
+
+    // recursion
+    T l = nodes[value].left();
+    T r = nodes[value].right();
+
+    if ( l && eqinfo[l] == EMPTY )
+      best_r( s, eqinfo, l, cval, selected, comp );
+
+    if ( r && eqinfo[r] == EMPTY )
+      best_r( s, eqinfo, r, cval, selected, comp );
+  }
+
+
+
+
+
+
+
+
   // cerca il nodo con il cx piu' piccolo (o piu' grande) fra this e s.
   // cval     the minimal cx found
   // selected the correspondent node
