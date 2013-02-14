@@ -96,7 +96,7 @@ T movebestr ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 
   // cerco il nodo con c(x) massimo
   T selected = EMPTY, cmax = 0, rx = a.size();
-  a.best_r( b, eqinfo, a.root(), cmax, selected, greater<T>() );
+  a.best_r( b, eqinfo, a.root(), cmax, selected, less<T>() );
 
   if ( cmax == 0 )
     return total;
