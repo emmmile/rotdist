@@ -29,26 +29,28 @@ void test_algorithms ( size_t runs, int index ) {
   for (i = 0; i < runs; ++i ) {
     ztree<N> a( gen );
     ztree<N> b( gen );
-    ptree<int> aa( a ), aaa( a );
-    ptree<int> bb( b ), bbb( b );
+    ptree<int> aa( a ), aaa( a ), aaaa( a );
+    ptree<int> bb( b ), bbb( b ), bbbb( b );
 
     if ( has_equivalent(aa,bb) ) { --i; continue; } // only very bad trees
 
     size_t visited;
-    int toptimal, tdistance, tcentral;
+    int toptimal, tdistance, tcentral, tnewbetter;
     toptimal = distance(a, b, visited );
     tdistance = newalgo( aa, bb );
-    tcentral = newbetteralgo( aaa, bbb );
+    tcentral = central( aaa, bbb );
+    tnewbetter = newbetteralgo( aaaa, bbbb );
     //algonew += tdistance;
     //optimal += toptimal;
 
     assert( aa == bb );
+    assert( aaaa == bbbb );
     //assert( aaa == bbb );
     assert( toptimal <= tdistance );
 
     output_mutex.lock();
     //if ( toptimal < tdistance )
-    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tcentral << "\t" << visited << endl;
+    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tnewbetter << "\t" << tcentral << "\t" << visited << endl;
     output_mutex.unlock();  
 }
 

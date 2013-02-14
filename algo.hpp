@@ -413,7 +413,7 @@ T k_equivalent ( ptree<T>& a, ptree<T>& b ) {
   T total = 0;
   T k = 1;
 
-  while ( k <= 2 ) {
+  while ( k <= 1 ) {
     T op = handle_k_equivalence(a,b,k);
 
     if ( op == 0 )
