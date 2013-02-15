@@ -372,7 +372,7 @@ public:
 
   print( const ptree<T>& t, const ptree<T>& s, ostream& stream = cout ) : width( 0 ){
 
-    print_tree( out, &(t[t.root()]), t.base(), NULL );
+    print_tree( out, &(t[t.root()]), t.base() );
     print<T> second( s );
     merge( second );
     stream << out.str();

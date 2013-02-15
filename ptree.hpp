@@ -262,9 +262,12 @@ public:
     T out = 0;
 
     for ( T i = nodes[__root].minvalue; i <= nodes[__root].maxvalue; ++i ) {
-      if ( i == __root ) continue;
+      eqinfo.set(i, EMPTY);
+
+      //if ( i == __root ) continue;
 
       if ( sameInterval( nodes[i], s.nodes[i] ) ) {
+        //cout << "node " << i << " has same interval of " << i << endl;
         eqinfo.set(i, i); ++out;
         continue;
       }
@@ -273,6 +276,7 @@ public:
         T y = nodes[s.nodes[i].minvalue - 1].right();
         // puo' succedere che y sia EMPTY!
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) ) {
+          //cout << "node " << y << " has same interval of " << i << endl;
           eqinfo.set(y,i); ++out;
         }
       }
@@ -281,6 +285,7 @@ public:
         T y = nodes[s.nodes[i].maxvalue + 1].left();
 
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) ) {
+          //cout << "node " << y << " has same interval of " << i << endl;
           eqinfo.set(y,i); ++out;
         }
       }
@@ -294,6 +299,7 @@ public:
     // compute r for the current node
 
     T current = r( value, eqinfo ) + s.r( value, eqinfo.inverse() );
+    //cout << "distances are " << r( value, eqinfo ) << " " << s.r( value, eqinfo.inverse() ) << endl;
     if ( comp( current, rval ) ) {
       selected = value;
       rval = current;
