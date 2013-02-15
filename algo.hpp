@@ -72,6 +72,7 @@ T central ( ptree<T>& a, ptree<T>& b ) {
 template<class T>
 T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   assert( a.size() == b.size() );
+
   T total = 0;
 
   // cerco il nodo con c(x) massimo
@@ -102,7 +103,7 @@ T movebestr ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
     //cout << "nothing to do, selected = " << selected << endl;
     return total;
   }
-  
+
   // porto il nodo selezionato alla radice in entrambi gli alberi
   total += a.to_root( selected );
   total += b.to_root( selected );
@@ -129,6 +130,9 @@ template<class T>
 T newalgo ( ptree<T>& a, ptree<T>& b ) {
   assert( a.size() == b.size() );
 
+  if ( a.size() == 0 )
+    return 0;
+
   T total = 0;
   equivalence_info<T> eqinfo( a.size() );
 
@@ -138,16 +142,24 @@ T newalgo ( ptree<T>& a, ptree<T>& b ) {
   // porto a radice il nodo x con c(x) massimo
   a.equal_subtrees( b, eqinfo );
   total += centralfirststep( a, b, eqinfo );
-  a.equal_subtrees( b, eqinfo );
+  //a.equal_subtrees( b, eqinfo );
 
   // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
   // guardo se posso staccare altri nodi 1-equivalenti
-  total += k_equivalent(a, b);
+  //total += k_equivalent(a, b);
 
-  a.equal_subtrees( b, eqinfo );
-  simple_set<T> equivalent( eqinfo );
+  //a.equal_subtrees( b, eqinfo );
+  //simple_set<T> equivalent( eqinfo );
 
-  // 2. On every equivalent subtree it executes the processing
+
+  ptree<T> al = a.left();
+  ptree<T> bl = b.left();
+
+  ptree<T> ar = a.right();
+  ptree<T> br = b.right();
+  return total + newalgo( al, bl ) + newalgo( ar, br );
+
+  /*// 2. On every equivalent subtree it executes the processing
   for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ) {
     ptree<T> aa( a.subtree( *i ), true );
     ptree<T> bb( b.subtree( eqinfo[*i] ), true );
@@ -166,7 +178,7 @@ T newalgo ( ptree<T>& a, ptree<T>& b ) {
     if ( eqinfo[*i] == *i ) ++i;
   }
 
-  return total;
+  return total;*/
 }
 
 
@@ -196,7 +208,7 @@ T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
 
   a.equal_subtrees( b, eqinfo );
   simple_set<T> equivalent( eqinfo );
-  
+
   //cout << "main done" << endl;
   //print<T>( a, b );
 
@@ -207,7 +219,7 @@ T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
 
     // porto il nodo x con c(x) massimo a radice anche in questo sottoalbero (creando nuovi nodi equivalenti)
     total += movebestr( aa, bb, eqinfo );
-    
+
 
     // ricontrollo se posso staccare altri nodi 1-equivalenti (chiamo sempre su tutto l'albero
     // perche' la make_all_equivalent e' progettata cosi'
