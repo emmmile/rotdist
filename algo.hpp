@@ -83,7 +83,7 @@ T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   if ( cmax == 0 )
     return total;
 
-  cout << "selected = " << selected << endl;
+  //cout << "selected = " << selected << endl;
 
   // porto il nodo selezionato alla radice in entrambi gli alberi
   total += a.to_root( selected );
@@ -148,9 +148,9 @@ T newalgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   // porto a radice il nodo x con c(x) massimo
   a.equal_subtrees( b, eqinfo );
 
-  cout << a << endl << b << "====================\n";
+  print<T>( a, b, eqinfo );
   total += centralfirststep( a, b, eqinfo );
-  cout << a << endl << b << "====================\n";
+  //cout << a << endl << b << "====================\n";
   //a.equal_subtrees( b, eqinfo );
 
   // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
@@ -396,7 +396,7 @@ T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& e
     if ( i == a.root() ) continue;
 
     a.equal_subtrees( b, eqinfo );
-    //if ( eqinfo[i] != EMPTY ) continue;
+    if ( eqinfo[i] != EMPTY ) continue;
 
     T father = a[i].father();
 

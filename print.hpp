@@ -371,7 +371,15 @@ public:
   }
 
   print( const ptree<T>& t, const ptree<T>& s, ostream& stream = cout ) : width( 0 ){
-    equivalence_info<T> eqinfo( t.size() );
+
+    print_tree( out, &(t[t.root()]), t.base(), NULL );
+    print<T> second( s );
+    merge( second );
+    stream << out.str();
+  }
+
+  print( const ptree<T>& t, const ptree<T>& s, equivalence_info<T>& eqinfo, ostream& stream = cout ) : width( 0 ){
+    //equivalence_info<T> eqinfo( t.size() );
     t.equal_subtrees( s, eqinfo );
 
 
