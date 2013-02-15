@@ -43,9 +43,14 @@ void test_algorithms ( size_t runs, int index ) {
     //algonew += tdistance;
     //optimal += toptimal;
 
+
+
     assert( aa == bb );
-    assert( aaaa == bbbb );
-    //assert( aaa == bbb );
+    if ( aaaa != bbbb ) {
+      print<int>( aaaa, bbbb );
+      exit( 1 );
+    }
+    assert( aaa == bbb );
     assert( toptimal <= tdistance );
 
     output_mutex.lock();
