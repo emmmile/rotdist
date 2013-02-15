@@ -1,0 +1,13 @@
+/home/edt/uni/rotation distance/code/main.cpp
+/home/edt/uni/rotation distance/code/node.hpp
+/home/edt/uni/rotation distance/code/print.hpp
+/home/edt/uni/rotation distance/code/ptree.hpp
+/home/edt/uni/rotation distance/code/treegraph.hpp
+/home/edt/uni/rotation distance/code/ztree.hpp
+Sconstruct
+equivalence.hpp
+simple_set.hpp
+config.hpp
+random/random.hpp
+khash.hh
+algo.hpp
