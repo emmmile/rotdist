@@ -79,8 +79,11 @@ T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   T selected = EMPTY, cmax = 0, rx = a.size();
   a.best_c( b, eqinfo, a.root(), cmax, selected, rx, greater<T>() );
 
+
   if ( cmax == 0 )
     return total;
+
+  cout << "selected = " << selected << endl;
 
   // porto il nodo selezionato alla radice in entrambi gli alberi
   total += a.to_root( selected );
@@ -126,27 +129,33 @@ bool has_equivalent ( ptree<T>& a, ptree<T>& b ) {
 }
 
 
+
 template<class T>
-T newalgo ( ptree<T>& a, ptree<T>& b ) {
+T newalgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   assert( a.size() == b.size() );
+
 
   if ( a.size() == 0 )
     return 0;
 
   T total = 0;
-  equivalence_info<T> eqinfo( a.size() );
+  a.equal_subtrees( b, eqinfo );
+
 
   // cerco di staccare nodi 1-equivalenti finche' posso
-  total += k_equivalent(a, b);
+  total += k_equivalent(a, b, eqinfo);
 
   // porto a radice il nodo x con c(x) massimo
   a.equal_subtrees( b, eqinfo );
+
+  cout << a << endl << b << "====================\n";
   total += centralfirststep( a, b, eqinfo );
+  cout << a << endl << b << "====================\n";
   //a.equal_subtrees( b, eqinfo );
 
   // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
   // guardo se posso staccare altri nodi 1-equivalenti
-  //total += k_equivalent(a, b);
+  //total += k_equivalent(a, b, eqinfo);
 
   //a.equal_subtrees( b, eqinfo );
   //simple_set<T> equivalent( eqinfo );
@@ -157,7 +166,7 @@ T newalgo ( ptree<T>& a, ptree<T>& b ) {
 
   ptree<T> ar = a.right();
   ptree<T> br = b.right();
-  return total + newalgo( al, bl ) + newalgo( ar, br );
+  return total + newalgo_r( al, bl, eqinfo ) + newalgo_r( ar, br, eqinfo );
 
   /*// 2. On every equivalent subtree it executes the processing
   for ( typename simple_set<T>::iterator i = equivalent.begin(); i < equivalent.end(); ) {
@@ -183,6 +192,14 @@ T newalgo ( ptree<T>& a, ptree<T>& b ) {
 
 
 
+template<class T>
+T newalgo ( ptree<T>& a, ptree<T>& b ) {
+  equivalence_info<T> eqinfo( a.size() );
+  return newalgo_r( a, b, eqinfo );
+}
+
+
+
 
 
 
@@ -195,7 +212,7 @@ T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
   equivalence_info<T> eqinfo( a.size() );
 
   // cerco di staccare nodi 1-equivalenti finche' posso
-  total += k_equivalent(a, b);
+  total += k_equivalent(a, b,eqinfo);
 
   // porto a radice il nodo x con c(x) massimo
   a.equal_subtrees( b, eqinfo );
@@ -204,7 +221,7 @@ T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
 
   // sicuramente ora la radice e' un nodo equivalente (quindi e' inutile iterare su questo albero)
   // guardo se posso staccare altri nodi 1-equivalenti
-  total += k_equivalent(a, b);
+  total += k_equivalent(a, b,eqinfo);
 
   a.equal_subtrees( b, eqinfo );
   simple_set<T> equivalent( eqinfo );
@@ -223,7 +240,7 @@ T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
 
     // ricontrollo se posso staccare altri nodi 1-equivalenti (chiamo sempre su tutto l'albero
     // perche' la make_all_equivalent e' progettata cosi'
-    total += k_equivalent(a, b);
+    total += k_equivalent(a, b, eqinfo);
 
     // and updates the equivalence informations
     a.equal_subtrees( b, eqinfo );
@@ -379,7 +396,7 @@ T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& e
     if ( i == a.root() ) continue;
 
     a.equal_subtrees( b, eqinfo );
-    if ( eqinfo[i] != EMPTY ) continue;
+    //if ( eqinfo[i] != EMPTY ) continue;
 
     T father = a[i].father();
 
@@ -407,10 +424,9 @@ T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& e
 // esegue una singola k-equivalenza, assumendo non ci siano nodi equivalenti con
 // 1, 2, ..., k-1 rotazioni.
 template<class T>
-T handle_k_equivalence ( ptree<T>& a, ptree<T>& b, T k ) {
+T handle_k_equivalence ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo ) {
   assert( k > 0 );
 
-  equivalence_info<T> eqinfo( a.size() );
   T before = a.equal_subtrees( b, eqinfo );
 
   if ( before == a.size() - 1 ) return 0;
@@ -427,12 +443,12 @@ T handle_k_equivalence ( ptree<T>& a, ptree<T>& b, T k ) {
 
 
 template<class T>
-T k_equivalent ( ptree<T>& a, ptree<T>& b ) {
+T k_equivalent ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   T total = 0;
   T k = 1;
 
   while ( k <= 2 ) {
-    T op = handle_k_equivalence(a,b,k);
+    T op = handle_k_equivalence(a,b,k,eqinfo);
 
     if ( op == 0 )
       k++;
