@@ -19,14 +19,16 @@ template<class T>
 T list ( ptree<T>& a, T i, equivalence_info<T>& eqinfo, rotation_type type = LEFT ) {
   if ( i == EMPTY ) return 0;
 
+  a.get_structure( eqinfo );
+
   T total = 0;
   while ( i != EMPTY ) {
     T next = i;
 
     T j = i;
-    while ( ( type == RIGHT && a.phi( j, eqinfo ) != 0 ) ||
-            ( type == LEFT && a.gamma( j, eqinfo ) != 0 ) ) {
-      next = ( type == LEFT ) ? a.base()[j].right() : a.base()[j].left();
+    while ( ( type == RIGHT && ( a[j].left() && eqinfo[a[j].left()] == EMPTY ) ) ||
+            ( type == LEFT && ( a[j].right() && eqinfo[a[j].right()] == EMPTY ) ) ) {
+      next = ( type == LEFT ) ? a[j].right() : a[j].left();
 
       a.rotate( j, type );
       ++total;
@@ -50,8 +52,8 @@ T central ( ptree<T>& a, ptree<T>& b ) {
   T total = 0;
 
   // cerco il nodo con c(x) massimo
-  T selected = EMPTY, cmax = 0, rx = a.size();
-  a.best_c( b, eqinfo, a.root(), cmax, selected, rx, greater<T>() );
+  T cmax = 0, rx = 2 * a.size() + 1;
+  T selected = a.best_c( b, eqinfo, cmax, rx, greater<T>() );
 
   if ( cmax == 0 )
     return total;
@@ -71,19 +73,19 @@ T central ( ptree<T>& a, ptree<T>& b ) {
 
 template<class T>
 T centralfirststep ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
+  //cout << "centralfirststep()" << endl;
   assert( a.size() == b.size() );
 
   T total = 0;
 
   // cerco il nodo con c(x) massimo
-  T selected = EMPTY, cmax = 0, rx = a.size();
-  a.best_c( b, eqinfo, a.root(), cmax, selected, rx, greater<T>() );
+  T cmax = 0, rx = 2 * a.size() + 1;
+  T selected = a.best_c( b, eqinfo, cmax, rx, greater<T>() );
 
-
-  if ( cmax == 0 )
+  if ( cmax == 0 || selected == EMPTY )
     return total;
 
-  //cout << "selected = " << selected << endl;
+  //cout << "selected node " << selected << " with cmax = " << cmax << endl;
 
   // porto il nodo selezionato alla radice in entrambi gli alberi
   total += a.to_root( selected );
@@ -100,14 +102,13 @@ T movebestr ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   T total = 0;
 
   // cerco il nodo con r(x) minimo
-  T selected = EMPTY, rx = 2 * a.size() + 1;
-  a.best_r( b, eqinfo, a.root(), rx, selected, less<T>() );
+  T rx = 2 * a.size() + 1;
+  T selected = a.best_r( b, eqinfo, rx, less<T>() );
 
-  if ( rx == 0 )
+  if ( rx == 0 || selected == EMPTY )
     return total;
 
-  if ( selected == 0 )
-    print<T>(a, b,eqinfo);
+  //cout << "selected node " << selected << " with rx = " << rx << endl;
 
   // porto il nodo selezionato alla radice in entrambi gli alberi
   total += a.to_root( selected );
@@ -136,13 +137,14 @@ template<class T>
 T newalgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   assert( a.size() == b.size() );
 
+  //printf( "a.root() = %d, b.root() = %d, size = %d\n", a.root(), b.root(), a.size() );
   if ( a.size() == 0 || a.size() == 1 )
     return 0;
 
 
   T total = 0;
   a.equal_subtrees( b, eqinfo );              // aggiorno gli intervalli
-  total += k_equivalent(a, b, eqinfo);        // stacco nodi k-equivalenti
+  total += k_equivalent(a, b, 1, eqinfo);        // stacco nodi k-equivalenti
   a.equal_subtrees( b, eqinfo );              // riaggiorno
 
   total += centralfirststep( a, b, eqinfo );  // porto un nodo a radice
@@ -159,6 +161,7 @@ T newalgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 
 template<class T>
 T newalgo ( ptree<T>& a, ptree<T>& b ) {
+  //cout << "newalgo()\n";
   equivalence_info<T> eqinfo( a.size() );
   return newalgo_r( a, b, eqinfo );
 }
@@ -168,34 +171,38 @@ T newalgo ( ptree<T>& a, ptree<T>& b ) {
 
 
 template<class T>
-T newbetteralgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
+T mix_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   assert( a.size() == b.size() );
+
 
   if ( a.size() == 0 || a.size() == 1 )
     return 0;
 
-
   T total = 0;
   a.equal_subtrees( b, eqinfo );              // aggiorno gli intervalli
-  total += k_equivalent(a, b, eqinfo);        // stacco nodi k-equivalenti
+  //print<T>(a,b);
+  //cout << eqinfo << endl;
+  total += k_equivalent(a, b, 1, eqinfo);     // stacco nodi k-equivalenti
   a.equal_subtrees( b, eqinfo );              // riaggiorno
 
   total += movebestr( a, b, eqinfo );         // porto un nodo a radice
   a.equal_subtrees( b, eqinfo );              // riaggiorno (in particolare i figli)
 
+
   ptree<T> al = a.left();
   ptree<T> bl = b.left();
   ptree<T> ar = a.right();
   ptree<T> br = b.right();
-  return total + newbetteralgo_r( al, bl, eqinfo ) + newbetteralgo_r( ar, br, eqinfo );
+  return total + mix_r( al, bl, eqinfo ) + mix_r( ar, br, eqinfo );
 }
 
 
 
 template<class T>
-T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
+T mix ( ptree<T>& a, ptree<T>& b ) {
+  //cout << "mix()\n";
   equivalence_info<T> eqinfo( a.size() );
-  return newbetteralgo_r( a, b, eqinfo );
+  return mix_r( a, b, eqinfo );
 }
 
 
@@ -203,94 +210,76 @@ T newbetteralgo ( ptree<T>& a, ptree<T>& b ) {
 
 
 
+
 template<class T>
-T handle_k_equivalence_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo, T before, T kin ) {
+bool k_equivalent_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo, T before ) {
   if ( k == 0 ) {
     T after = a.equal_subtrees( b, eqinfo );
 
-
-    // this is the condition for the operation to be kept
-    // holds if the initial k is less than 4, that is deleting 2 subtrees
-    // with up to 3 rotations reduce the rotations bound
-    T threshold = (kin == 1 ? 1 : 1);
-    if ( after - before >= threshold ) return 1;
-    else return 0;
+    T threshold = 1;
+    if ( after - before >= threshold )
+      return true; // keep
+    else
+      return false;
   }
 
   for ( T i = a.minimum(); i <= a.maximum(); ++i ) {
     if ( i == a.root() ) continue;
 
-    a.equal_subtrees( b, eqinfo );
+    /*if( a.equal_subtrees( b, eqinfo ) != before ) {
+      print<T>(a,b,eqinfo);
+      printf( "now is %d, was %d\n", a.equal_subtrees( b, eqinfo ), before );
+      cout << eqinfo << endl;
+      exit(1);
+    }*/
     if ( eqinfo[i] != EMPTY ) continue;
 
     T father = a[i].father();
 
     a.up( i );
-    T rots = handle_k_equivalence_r( a, b, k-1, eqinfo, before, kin );
+    bool keep = k_equivalent_r( a, b, k-1, eqinfo, before );
 
 
-    if ( rots == 0 ) {
-      // the rotation has to be reverted (the condition is not satisfied)
-      a.rotate( father, i );
-    } else {
-      // else I want to keep
-      if ( kin == k ) {
-        //cout << "kept rotation with " << i << endl;
-        return rots;
-      } else
-        return rots + 1;
+    if ( keep ) {
+      //cout << "kept rotation up of " << i << endl;
+      //print<T>(a,b,eqinfo);
+      return true; // keep
     }
+    a.rotate( father, i );
+    //printf( "restored rotation up of %d [%d, %d, %d]\n", i, a.minimum(), a.root(), a.maximum() );
   }
 
-  return 0;
+  return false;
 }
 
 
-
-// esegue una singola k-equivalenza, assumendo non ci siano nodi equivalenti con
-// 1, 2, ..., k-1 rotazioni.
 template<class T>
-T handle_k_equivalence ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo ) {
-  assert( k > 0 );
-
-  T before = a.equal_subtrees( b, eqinfo );
-
-  if ( before == a.size() - 1 ) return 0;
-
-  T total = handle_k_equivalence_r( a, b, k, eqinfo, before, k );
-  if ( total != 0 ) return total;
-
-    total = handle_k_equivalence_r( b, a, k, eqinfo.inverse(), before, k );
-  if ( total != 0 ) return total;
-
-  return 0;
-}
-
-
-
-template<class T>
-T k_equivalent ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
+T k_equivalent ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo ) {
+  //cout << "k_equivalent()" << endl;
   T total = 0;
-  T k = 1;
 
-  while ( k <= 1 ) {
-    T op = handle_k_equivalence(a,b,k,eqinfo);
+  for ( T t = 1; t <= k; ) {
+    T before = a.equal_subtrees( b, eqinfo );
+    /*cout << eqinfo << endl;
+    a.debug();
+    b.debug();
+    print<T>(a,b,eqinfo);*/
 
-    if ( op == 0 )
-      k++;
+
+    bool something = k_equivalent_r( a, b, t, eqinfo, before );
+    if ( !something )
+      assert ( a.equal_subtrees(b, eqinfo) == before );
+
+    if ( !something )
+      something = k_equivalent_r( b, a, t, eqinfo.inverse(), before );
+
+    if ( !something ) // increase t
+      ++t;
     else {
-      if ( op == 2 ) {
-        //cout << "step with k = 2\n";
-        //print<T>(a,b);
-      }
-      if ( op == 3 ) {
-        cout << "step with k = 3\n";
-        //print<T>(a,b);
-      }
-      total += op;
-      k = 1;
+      total += t; // t remain the same (try to search again)
     }
   }
+
 
   return total;
 }

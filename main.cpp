@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <thread>
 #include <mutex>
-//#include <unordered_set>
 #include "config.hpp"
 #include "algo.hpp"
 using namespace std;
@@ -22,8 +21,7 @@ mutex output_mutex;
 
 void test_algorithms ( size_t runs, int index ) {
   size_t i;
-  Random gen( index );// (unsigned long) &i );
-  //double optimal = 0, algonew = 0;
+  Random gen( 0 );// (unsigned long) &i );
 
 
   for (i = 0; i < runs; ++i ) {
@@ -34,62 +32,50 @@ void test_algorithms ( size_t runs, int index ) {
 
     if ( has_equivalent(aa,bb) ) { --i; continue; } // only very bad trees
 
+    output_mutex.lock();
+    cout << a << "\t" << b << "\t";
+    cout.flush();
+    output_mutex.unlock();
+
     size_t visited;
     int toptimal, tdistance, tcentral, tnewbetter;
     toptimal = distance(a, b, visited );
     tdistance = newalgo( aa, bb );
     tcentral = central( aaa, bbb );
-    tnewbetter = newbetteralgo( aaaa, bbbb );
-    //algonew += tdistance;
-    //optimal += toptimal;
-
-
+    tnewbetter = mix( aaaa, bbbb );
 
     assert( aa == bb );
-    if ( aaaa != bbbb ) {
-      print<int>( aaaa, bbbb );
-      exit( 1 );
-    }
     assert( aaa == bbb );
-    assert( toptimal <= tdistance );
+    assert( aaaa == bbbb );
 
     output_mutex.lock();
-    //if ( toptimal < tdistance )
-    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tnewbetter << "\t" << tcentral << "\t" << visited << endl;
-    output_mutex.unlock();  
-}
-
-  //cout << "OPTIMAL AVG = " << optimal / runs << endl;
-  //cout << "NEWALGO AVG = " << algonew / runs << endl;
+    cout << toptimal << "\t" << tdistance << "\t" << tnewbetter << "\t" << tcentral << "\t" << visited << endl;
+    output_mutex.unlock();
+  }
 }
 
 
 int main ( int argv, char** argc ) {
-  /*ifstream ifs( "17.new.txt" );
-  string temp;
+  // n = 13 very bad mix
+  string a = "111010011000111001100110000";
+  string b = "110101100110110010010011000";
+  ztree<13> aa( a );
+  ztree<13> bb( b );
 
-  getline( ifs, temp ); //skip first
-  while ( getline( ifs, temp ) ) {
-    int index = temp.find_first_of('\t');
+  ptree<int> aaa( aa );
+  ptree<int> bbb( bb );
 
-    string a = temp.substr( 0, index );
-    string b = temp.substr( index + 1, 35 );
+  equivalence_info<int> eqinfo( aaa.size() );
+  aaa.equal_subtrees( bbb, eqinfo );
 
-    ztree<17> aa( a );
-    ztree<17> bb( b );
+  print<int>( aaa, bbb, eqinfo );
+  aaa.get_structure( eqinfo );
 
-    ptree<int> aaa( aa );
-    ptree<int> bbb( bb );
+  cout << mix( aaa, bbb ) << endl;
+  return 0;
 
-    if ( !has_equivalent(aaa, bbb) ) {
-      cout << temp.substr( 0, temp.find_last_of("\t") ) << "\t";
-      cout << central( aaa, bbb ) << endl;
-    }
-  }
 
-  return 0;*/
-
-  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  /*if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 
@@ -107,7 +93,7 @@ int main ( int argv, char** argc ) {
   //Join the threads with the main thread
   for( auto& i : t ) i.join();
 
-    return 0;
+    return 0;*/
 }
 
 

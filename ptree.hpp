@@ -9,7 +9,6 @@
 #include "print.hpp"
 #include "node.hpp"
 #include "ztree.hpp"
-#include "simple_set.hpp"
 #include "equivalence.hpp"
 #include "config.hpp"
 using namespace std;
@@ -34,24 +33,64 @@ template <class T> class print;
 template <class T = unsigned int>
 class ptree {
 protected:
+
+  class structure_info {
+    T* base;
+  public:
+    T* left;
+    T* right;
+    T* c;
+    T* r;
+
+    structure_info( ) {
+    }
+
+    structure_info( T size ) {
+      T step = size + 1;
+      base = new T [ step * 4 ];
+      fill( base, base + 4 * step, EMPTY );
+
+      left  = base;
+      right = base + 1 * step;
+      c     = base + 2 * step;
+      r     = base + 3 * step;
+    }
+
+    void free ( ) {
+      delete[] base;
+    }
+
+    void clear ( T beg, T end ) {
+      fill( left + beg, left + end, EMPTY );
+      fill( right + beg, right + end, EMPTY );
+      fill( c + beg, c + end, EMPTY );
+      fill( r + beg, r + end, EMPTY );
+    }
+  };
+
+  typedef T node_type;
+
+
   node<T>* nodes;
-  bool allocated;   // is the array allocated by this instance?
+  bool allocated;     // is the array allocated by this instance?
   T __size;           // number of nodes
   T __root;           // the value of the root node, nodes[root]
+  structure_info info;
 
-  typedef equivalence_info<T> info;
-  typedef T node_type;
+
 
   // costruttore di copia, crea un albero da un array di nodi gia' presente,
   // Serve per poter trattare i sottoalberi di un albero dato, modificando anche l'originale
   ptree ( const ptree& parent, T root ) {
     this->nodes = parent.nodes;
+    this->info = parent.info;
     this->allocated = false;
     this->__root = root;
     if ( root == EMPTY )
       this->__size = 0;
     else
       this->__size = nodes[root].maxvalue - nodes[root].minvalue + 1;
+    //cout << "shared\n";
   }
 
   // costruisce un albero casuale, con n nodi, partendo dall'etichetta start_value,
@@ -96,41 +135,40 @@ public:
   }
 
   // build a random tree with n nodes
-  ptree ( T n ) : __size( n ) {
+  ptree ( T n )
+    : __size( n ), info( n ) {
     nodes = new node<T> [ n + 1 ];
     memset( nodes, 0, sizeof( node<T> ) * ( n + 1 ) );
     __root = build_randomly( n, 1, nodes + 1, 0 );
     allocated = true;
   }
 
-  // copy constructor. If copyData is true this effectively copy the data
-  // otherwise the real data is shared
-  ptree ( const ptree<T>& x, bool shared = false ) {
-    if ( shared == false ) {
-      nodes = new node<T> [ x.__size + 1 ];
-      //fill( nodes, nodes + x.size + 1, node<T>() );
-      copy( x.nodes, x.nodes + x.__size + 1, nodes );
-      allocated = true;
-    } else {
-      nodes = x.nodes;
-      allocated = false;
-    }
-
-    __size = x.__size;
-    __root = x.__root;
-  }
-
   // costruisce un ptree da uno ztree
-  ptree ( const ztree<N>& z ) : __size( z.vertices() ) {
+  template<unsigned int V>
+  ptree ( const ztree<V>& z )
+    : __size( z.vertices() ), info( z.vertices() ) {
     nodes = new node<T> [ __size + 1 ];
     memset( nodes, 0, sizeof( node<T> ) * ( __size + 1 ) );
     allocated = true;
 
-    z.get_tree<T>( __root, nodes );
+    z.get_tree( __root, nodes );
+  }
+
+  // copy constructor, not shared!
+  ptree ( const ptree<T>& x )
+    : __size( x.__size ), __root( x.__root ), info( x.__size ) {
+    nodes = new node<T> [ x.__size + 1 ];
+    copy( x.nodes, x.nodes + x.__size + 1, nodes );
+    allocated = true;
+
+    cout << "not shared\n";
   }
 
   ~ptree ( ) {
-    if ( allocated ) delete[] nodes;
+    if ( allocated ) {
+      delete[] nodes;
+      this->info.free();
+    }
   }
 
 
@@ -170,79 +208,9 @@ public:
     return nodes[index];
   }
 
-  // restituisce il sottoalbero radicato in value. E' necessario calcolare l'offset del
-  // sottoalbero nell'array, ovvero da dove inizia, e il numero di nodi.
-  // XXX Il sottoalbero generato e' a tutti gli effetti un ptree ma i suoi nodi sono in
-  // comune con quelli dell'albero di origine, per cui attenzione a non confondersi.
+  // restituisce un sottoalbero condiviso
   ptree<T> subtree ( const T value ) const {
-    /*T left = value;
-    // altrimenti determino l'intervallo e la dimensione del sottoalbero,
-    // prima vado a sinistra il piu' possibile
-    while ( nodes[left].left() != EMPTY ) left = nodes[left].left();
-
-
-    T right = value;
-    // poi vado a destra il piu' possibile e determino l'intervallo in O(n)
-    while ( nodes[right].right() != EMPTY ) right = nodes[right].right();*/
-
     return ptree<T>( *this, value );
-  }
-
-  // ometto i controlli tanto verranno chiamate o da c() o da to_leaf
-  T phi ( const T x, info& eqinfo ) const {
-    T total = 0;
-
-    // conto i nodi nel sottobraccio di sinistra
-    for ( T j = nodes[x].left(); j != EMPTY; j = nodes[j].right() ) {
-      if ( eqinfo[j] != EMPTY ) break;
-      total++;
-    }
-
-    return total;
-  }
-
-  T gamma ( const T x, info& eqinfo ) const {
-    T total = 0;
-
-    for ( T j = nodes[x].right(); j != EMPTY; j = nodes[j].left() ) {
-      if ( eqinfo[j] != EMPTY ) break;
-      total++;
-    }
-
-    return total;
-  }
-
-  // calcola il c(x) ovvero |F(x)| + |G(x)| per un determinato nodo x
-  // restituisce -1 in caso l'indice non sia valido (non dovrebbe mai verificarsi!)
-  // Nell'array eqinfo sono contenute le informazioni a riguardo i nodi omologhi,
-  // se e' != NULL va considerato.
-  T c ( const T x, info& eqinfo ) const {
-    T total = 0;
-
-    // conto i nodi nel sottobraccio di sinistra
-    total += phi( x, eqinfo );
-
-    // conto i nodi nel sottobraccio di destra
-    total += gamma( x, eqinfo );
-
-    return total;
-  }
-
-  // calcola r(x), la distanza dalla radice
-  T r ( const T x, info& eqinfo ) const {
-    T total = 0;
-    T j = x;
-
-    // conto i nodi per arrivare alla radice
-    do {
-      if ( eqinfo[j] != EMPTY ) break;
-      if ( nodes[j].father() == EMPTY ) break;
-      total++;
-
-      j = nodes[j].father();
-    } while ( j != EMPTY );
-
-    return total;
   }
 
   bool sameInterval ( node<T>& a, node<T>& b ) const {
@@ -253,17 +221,16 @@ public:
   // Gli indici rappresentano i nodi in *this, mentre il contenuto l'eventuale nodo in s
   // che e' omologo (EMPTY altrimenti). XXX considera un solo array, riferito a *this,
   // se serve anche quello riferito a s, seqinfo allore e' != NULL.
-  T equal_subtrees ( const ptree<T>& s, info& eqinfo ) const {
+  T equal_subtrees ( const ptree<T>& s, equivalence_info<T>& eqinfo ) const {
     if ( s.__size != __size ) {
       cerr << "equal_subtrees(): not equivalent trees.\n";
       return 0;
     }
 
     T out = 0;
+    eqinfo.clear( minimum(), maximum() + 1 );
 
-    for ( T i = nodes[__root].minvalue; i <= nodes[__root].maxvalue; ++i ) {
-      eqinfo.set(i, EMPTY);
-
+    for ( T i = minimum(); i <= maximum(); ++i ) {
       //if ( i == __root ) continue;
 
       if ( sameInterval( nodes[i], s.nodes[i] ) ) {
@@ -272,7 +239,7 @@ public:
         continue;
       }
 
-      if ( s.nodes[i].minvalue > 1 ) {
+      if ( s.nodes[i].minvalue > minimum() ) {
         T y = nodes[s.nodes[i].minvalue - 1].right();
         // puo' succedere che y sia EMPTY!
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) ) {
@@ -281,7 +248,7 @@ public:
         }
       }
 
-      if ( s.nodes[i].maxvalue < __size ) {
+      if ( s.nodes[i].maxvalue < maximum() ) {
         T y = nodes[s.nodes[i].maxvalue + 1].left();
 
         if ( y != EMPTY && sameInterval( nodes[y], s.nodes[i] ) ) {
@@ -295,61 +262,91 @@ public:
   }
 
   template<class Comp = less<T> >
-  void best_r ( ptree<T>& s, info& eqinfo, T value, T& rval, T& selected, Comp comp = Comp() ) {
-    // compute r for the current node
+  T best_r ( ptree<T>& s, equivalence_info<T>& eqinfo, T& rvalue, Comp comp = Comp() ) {
+    get_structure(eqinfo);
+    s.get_structure(eqinfo.inverse());
 
-    T current = r( value, eqinfo ) + s.r( value, eqinfo.inverse() );
-    //cout << "distances are " << r( value, eqinfo ) << " " << s.r( value, eqinfo.inverse() ) << endl;
-    if ( comp( current, rval ) ) {
-      selected = value;
-      rval = current;
+    T selected = EMPTY;
+
+    for ( T i = minimum(); i <= maximum(); ++i ) {
+      if ( info.r[i] == EMPTY && s.info.r[i] == EMPTY )
+        continue;
+
+      T current = info.r[i] + s.info.r[i];
+
+      if ( comp( current, rvalue ) ) {
+        selected = i;
+        rvalue = current;
+      }
     }
 
-    // recursion
-    T l = nodes[value].left();
-    T r = nodes[value].right();
-
-    if ( l && eqinfo[l] == EMPTY )
-      best_r( s, eqinfo, l, rval, selected, comp );
-
-    if ( r && eqinfo[r] == EMPTY )
-      best_r( s, eqinfo, r, rval, selected, comp );
+    return selected;
   }
 
-  // cerca il nodo con il cx piu' piccolo (o piu' grande) fra this e s.
-  // cval     the minimal cx found
-  // selected the correspondent node
+
   template<class Comp = less<T> >
-  void best_c ( ptree<T>& s, info& eqinfo, T value, T& cval, T& selected, T& rx, Comp comp = Comp() ) {
-    // compute c for the current node
-    T current   = c( value, eqinfo ) + s.c( value, eqinfo.inverse() );
-    T currentrx = r( value, eqinfo ) + s.r( value, eqinfo.inverse() );
-    if ( comp( current, cval ) ) {  // it means: current < cval, if comp is <
-      selected = value;
-      cval = current;
-      rx = currentrx;
-    } else {
-      if ( ! comp( cval, current ) ) { // current == cval
-        // check rx
-        if ( currentrx < rx ) {
-          selected = value;
-          cval = current;
-          rx = currentrx;
+  T best_c ( ptree<T>& s, equivalence_info<T>& eqinfo, T& cvalue, T& rvalue, Comp comp = Comp() ) {
+    get_structure(eqinfo);
+    s.get_structure(eqinfo.inverse());
+
+    T selected = EMPTY;
+
+    for ( T i = minimum(); i <= maximum(); ++i ) {
+      T current = info.c[i] + s.info.c[i];
+      T rx = info.r[i] + s.info.r[i];
+
+      if ( comp( current, cvalue ) ) { // <
+        selected = i;
+        cvalue = current;
+        rvalue = rx;
+      } else {
+        if ( ! comp( cvalue, current ) && rx < rvalue ) { // ==
+          selected = i;
+          cvalue = current;
+          rvalue = rx;
         }
       }
     }
 
-    // recursion
+    return selected;
+  }
+
+  void get_structure ( equivalence_info<T>& eqinfo ) {
+    info.clear( nodes[root()].minvalue, nodes[root()].maxvalue + 1 );
+    get_structure_r( root(), 0, eqinfo );
+
+    /*printf( "x\tc(x)\tr(x)\n" );
+    for ( T i = nodes[root()].minvalue; i < nodes[root()].maxvalue + 1; ++i ) {
+      printf( "%d\t%d\t%d\t%d\t%d\n", i, info.c[i], info.r[i], info.left[i], info.right[i] );
+    }*/
+  }
+
+  void get_structure_r ( T value, T rx, equivalence_info<T>& eqinfo ) {
     T l = nodes[value].left();
     T r = nodes[value].right();
 
-    if ( l && eqinfo[l] == EMPTY )
-      best_c( s, eqinfo, l, cval, selected, rx, comp );
+    bool left  = ( l && eqinfo[l] == EMPTY );
+    bool right = ( r && eqinfo[r] == EMPTY );
 
-    if ( r && eqinfo[r] == EMPTY )
-      best_c( s, eqinfo, r, cval, selected, rx, comp );
+    info.r[value] = rx;
+
+    // base
+    if ( !left && !right ) {
+      info.left[value] = info.right[value] = info.c[value] = 0;
+      return;
+    }
+
+    // recursion
+    if ( left )
+      get_structure_r( l, rx + 1, eqinfo );
+
+    if ( right )
+      get_structure_r( r, rx + 1, eqinfo );
+
+    info.left[value]  =   left ? info.left[l]  + 1 : 0;
+    info.right[value] =  right ? info.right[r] + 1 : 0;
+    info.c[value]     = ( left ? info.right[l] + 1 : 0 ) + ( right ? info.left[r] + 1 : 0 );
   }
-
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -433,27 +430,8 @@ public:
     return false;
   }
 
-  // funzione usata da simplify per portare il nodo x ad essere una foglia,
-  // eseguendo c(x) rotazioni.
-  T to_leaf ( const T x, info& eqinfo ) {
-    T total = 0;
-
-    while ( phi( x, eqinfo ) != 0 ) {
-      rotate( x, RIGHT );
-      total++;
-    }
-
-    while ( gamma( x, eqinfo ) != 0 ) {
-      rotate( x, LEFT );
-      total++;
-    }
-
-    return total;
-  }
-
   // porta un nodo alla radice
   T to_root ( const T value ) {
-    //cout << "to_root" << endl;
     T rotations = 0;
 
     while ( __root != value )
@@ -505,7 +483,7 @@ public:
     if ( __size != another.__size )
       return __size < another.__size;
 
-    for ( T i = nodes[__root].minvalue; i <= nodes[__root].maxvalue; ++i ) {
+    for ( T i = minimum(); i <= maximum(); ++i ) {
       if ( !( nodes[i] == another.nodes[i] ) )
         return nodes[i] < another.nodes[i];
     }
@@ -518,6 +496,11 @@ public:
   friend ostream& operator << ( ostream& stream, const ptree<T>& t ) {
     print<T>( t, stream );
     return stream;
+  }
+
+  void debug ( ) {
+    for ( T i = minimum(); i <= maximum(); ++i )
+      cout << nodes[i] << endl;
   }
 };
 

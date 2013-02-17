@@ -2,6 +2,8 @@
 #ifndef _NODE_HPP
 #define _NODE_HPP  1
 #include <iostream>
+
+
 #define EMPTY    0
 
 using namespace std;
@@ -88,7 +90,8 @@ public:
   }
 
   bool operator == ( const node<T>& t ) const {
-    return ( ls == t.ls ) && ( rs == t.rs ) && ( fa == t.fa ) && ( val == t.val );
+    return ( ls == t.ls ) && ( rs == t.rs ) && ( fa == t.fa ) && ( val == t.val ) &&
+           ( minvalue == t.minvalue ) && ( maxvalue == t.maxvalue );
   }
 
   friend ostream& operator << ( ostream& s, const node<T>& t ) {

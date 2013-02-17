@@ -12,54 +12,65 @@ namespace tree {
 template<class T = unsigned int>
 class equivalence_info {
 private:
-  T* left;
-  T* right;
-  bool allocated;
-  T dim;
+  T* __left;
+  T* __right;
+  bool __allocated;
+  T __size;
 
   equivalence_info<T>* __inverse;
 
   // constructor for the inverse view, the memory is shared
   equivalence_info( T* l, T* r, equivalence_info* i ) : __inverse( i ) {
-    this->left  = l;
-    this->right = r;
-    allocated = false;
+    __left  = l;
+    __right = r;
+    __size = i->__size;
+    __allocated = false;
   }
 
 public:
   equivalence_info( uint size ) {
-    left  = new T [size + 1];
-    right = new T [size + 1];
-    fill( left,  left + size + 1,  EMPTY );
-    fill( right, right + size + 1, EMPTY );
-    allocated = true;
-    dim = size;
-    __inverse = new equivalence_info( right, left, this );
+    __left  = new T [size + 1];
+    __right = new T [size + 1];
+    __allocated = true;
+    __size = size;
+    __inverse = new equivalence_info( __right, __left, this );
+    clear( 0, size + 1 );
   }
 
   ~equivalence_info ( ) {
-    if ( !allocated ) return;
-    delete[] left;
-    delete[] right;
+    if ( !__allocated ) return;
+    delete[] __left;
+    delete[] __right;
     delete __inverse;
   }
 
   inline T operator [] ( T value ) const {
-    return left[value];
+    return __left[value];
   }
 
   inline T set ( T a, T b ) {
-    left[a]  = b;
-    right[b] = a;
+    __left[a]  = b;
+    __right[b] = a;
     return b;
   }
 
+  inline void clear ( T beg, T end ) {
+    fill( __left  + beg, __left  + end, EMPTY );
+    fill( __right + beg, __right + end, EMPTY );
+  }
+
   T size() const {
-    return dim;
+    return __size;
   }
 
   inline equivalence_info& inverse ( ) {
     return *__inverse;
+  }
+
+  friend ostream& operator << ( ostream& stream, const equivalence_info<T>& e ) {
+    for ( T i = 1; i < e.size(); ++i ) printf( "%2d ", e.__left[i] );  printf( "\n" );
+    for ( T i = 1; i < e.size(); ++i ) printf( "%2d ", e.__right[i] ); printf( "\n" );
+    return stream;
   }
 };
 

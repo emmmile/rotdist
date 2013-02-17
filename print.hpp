@@ -367,7 +367,6 @@ class print {
 public:
   print( const ptree<T>& t, ostream& stream = cout ) : width( 0 ) {
     print_tree( out, &(t[t.root()]), t.base() );
-    stream << out.str();
   }
 
   print( const ptree<T>& t, const ptree<T>& s, ostream& stream = cout ) : width( 0 ){
