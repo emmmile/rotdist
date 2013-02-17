@@ -137,7 +137,6 @@ template<class T>
 T newalgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
   assert( a.size() == b.size() );
 
-  //printf( "a.root() = %d, b.root() = %d, size = %d\n", a.root(), b.root(), a.size() );
   if ( a.size() == 0 || a.size() == 1 )
     return 0;
 
@@ -180,8 +179,6 @@ T mix_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 
   T total = 0;
   a.equal_subtrees( b, eqinfo );              // aggiorno gli intervalli
-  //print<T>(a,b);
-  //cout << eqinfo << endl;
   total += k_equivalent(a, b, 1, eqinfo);     // stacco nodi k-equivalenti
   a.equal_subtrees( b, eqinfo );              // riaggiorno
 
@@ -200,7 +197,6 @@ T mix_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 
 template<class T>
 T mix ( ptree<T>& a, ptree<T>& b ) {
-  //cout << "mix()\n";
   equivalence_info<T> eqinfo( a.size() );
   return mix_r( a, b, eqinfo );
 }
@@ -226,12 +222,6 @@ bool k_equivalent_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo
   for ( T i = a.minimum(); i <= a.maximum(); ++i ) {
     if ( i == a.root() ) continue;
 
-    /*if( a.equal_subtrees( b, eqinfo ) != before ) {
-      print<T>(a,b,eqinfo);
-      printf( "now is %d, was %d\n", a.equal_subtrees( b, eqinfo ), before );
-      cout << eqinfo << endl;
-      exit(1);
-    }*/
     if ( eqinfo[i] != EMPTY ) continue;
 
     T father = a[i].father();
@@ -240,13 +230,9 @@ bool k_equivalent_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo
     bool keep = k_equivalent_r( a, b, k-1, eqinfo, before );
 
 
-    if ( keep ) {
-      //cout << "kept rotation up of " << i << endl;
-      //print<T>(a,b,eqinfo);
+    if ( keep )
       return true; // keep
-    }
     a.rotate( father, i );
-    //printf( "restored rotation up of %d [%d, %d, %d]\n", i, a.minimum(), a.root(), a.maximum() );
   }
 
   return false;
@@ -255,16 +241,10 @@ bool k_equivalent_r ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo
 
 template<class T>
 T k_equivalent ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo ) {
-  //cout << "k_equivalent()" << endl;
   T total = 0;
 
   for ( T t = 1; t <= k; ) {
     T before = a.equal_subtrees( b, eqinfo );
-    /*cout << eqinfo << endl;
-    a.debug();
-    b.debug();
-    print<T>(a,b,eqinfo);*/
-
 
     bool something = k_equivalent_r( a, b, t, eqinfo, before );
     if ( !something )
