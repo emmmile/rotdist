@@ -21,7 +21,7 @@ mutex output_mutex;
 
 void test_algorithms ( size_t runs, int index ) {
   size_t i;
-  Random gen( 0 );// (unsigned long) &i );
+  Random gen( index );// (unsigned long) &i );
 
 
   for (i = 0; i < runs; ++i ) {
@@ -32,14 +32,9 @@ void test_algorithms ( size_t runs, int index ) {
 
     if ( has_equivalent(aa,bb) ) { --i; continue; } // only very bad trees
 
-    output_mutex.lock();
-    cout << a << "\t" << b << "\t";
-    cout.flush();
-    output_mutex.unlock();
-
     size_t visited;
     int toptimal, tdistance, tcentral, tnewbetter;
-    toptimal = distance(a, b, visited );
+    toptimal = distance( a, b, visited );
     tdistance = newalgo( aa, bb );
     tcentral = central( aaa, bbb );
     tnewbetter = mix( aaaa, bbbb );
@@ -49,7 +44,7 @@ void test_algorithms ( size_t runs, int index ) {
     assert( aaaa == bbbb );
 
     output_mutex.lock();
-    cout << toptimal << "\t" << tdistance << "\t" << tnewbetter << "\t" << tcentral << "\t" << visited << endl;
+    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tnewbetter << "\t" << tcentral << "\t" << visited << endl;
     output_mutex.unlock();
   }
 }
@@ -57,7 +52,7 @@ void test_algorithms ( size_t runs, int index ) {
 
 int main ( int argv, char** argc ) {
   // n = 13 very bad mix
-  string a = "111010011000111001100110000";
+  /*string a = "111010011000111001100110000";
   string b = "110101100110110010010011000";
   ztree<13> aa( a );
   ztree<13> bb( b );
@@ -72,10 +67,10 @@ int main ( int argv, char** argc ) {
   aaa.get_structure( eqinfo );
 
   cout << mix( aaa, bbb ) << endl;
-  return 0;
+  return 0;*/
 
 
-  /*if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 
@@ -93,7 +88,7 @@ int main ( int argv, char** argc ) {
   //Join the threads with the main thread
   for( auto& i : t ) i.join();
 
-    return 0;*/
+    return 0;
 }
 
 
