@@ -51,22 +51,17 @@ void test_algorithms ( size_t runs, int index ) {
 
 
 int main ( int argv, char** argc ) {
-  // n = 13 very bad mix
-  /*string a = "111010011000111001100110000";
+  /*// n = 13 very bad mix
+  string a = "111010011000111001100110000";
   string b = "110101100110110010010011000";
   ztree<13> aa( a );
   ztree<13> bb( b );
 
   ptree<int> aaa( aa );
   ptree<int> bbb( bb );
-
-  equivalence_info<int> eqinfo( aaa.size() );
-  aaa.equal_subtrees( bbb, eqinfo );
-
-  print<int>( aaa, bbb, eqinfo );
-  aaa.get_structure( eqinfo );
-
-  cout << mix( aaa, bbb ) << endl;
+  size_t visited = 0;
+  cout << distance( aa, bb, visited ) << endl;
+  cout << newalgo( aaa, bbb ) << endl;
   return 0;*/
 
 

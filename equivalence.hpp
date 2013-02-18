@@ -74,8 +74,6 @@ public:
   }
 };
 
-
-
 }
 
 #endif // EQUIVALENCE_HPP

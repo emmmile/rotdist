@@ -296,13 +296,13 @@ T k_equivalent ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo ) {
 template<class T>
 class unordered_set : public khset_t<T> {};
 
-
-size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
+template<unsigned int U>
+size_t distance ( const ztree<U>& a, const ztree<U>& b, size_t& visited ) {
   visited = 0;
 
   if ( a == b ) return 0;
   unordered_set<unsigned long> queued;
-  deque<ztree<N> > q;
+  deque<ztree<U> > q;
   q.push_back( a );
   queued.insert( (int) a.to_ulong() );
 
@@ -319,11 +319,11 @@ size_t distance ( const ztree<N>& a, const ztree<N>& b, size_t& visited ) {
   bool found = false;
 
   while( q.size() != 0 ) {
-   size_t occupied = q.size() * sizeof( ztree<N> ) + queued.size() * sizeof( unsigned long );
+   size_t occupied = q.size() * sizeof( ztree<U> ) + queued.size() * sizeof( unsigned long );
    if ( occupied > visited ) visited = occupied;
     // select first node in the deque and generates its outcoming star
-    for ( unsigned int i = 1; i <= N; ++i ) {
-      ztree<N> newone = q.front();
+    for ( unsigned int i = 1; i <= U; ++i ) {
+      ztree<U> newone = q.front();
       newone ^ i;
 
       // if I already queued (or visited) this node I simply skip it
