@@ -6,6 +6,9 @@
 #include "ztree.hpp"
 #include "khash.hh"
 
+//#include <google/sparse_hash_set>
+using namespace std;
+
 
 namespace tree {
 ////////////////////////////////////////////////////////////////////////////////
@@ -290,9 +293,6 @@ T k_equivalent ( ptree<T>& a, ptree<T>& b, T k, equivalence_info<T>& eqinfo ) {
 
 
 
-
-
-
 template<class T>
 class unordered_set : public khset_t<T> {};
 
@@ -302,6 +302,7 @@ size_t distance ( const ztree<U>& a, const ztree<U>& b, size_t& visited ) {
 
   if ( a == b ) return 0;
   unordered_set<unsigned long> queued;
+  //google::sparse_hash_set<unsigned long> queued;
   deque<ztree<U> > q;
   q.push_back( a );
   queued.insert( (int) a.to_ulong() );
