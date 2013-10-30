@@ -25,8 +25,8 @@ void test_algorithms ( size_t runs, int index ) {
 
 
   for (i = 0; i < runs; ++i ) {
-    ztree<N> a( gen );
-    ztree<N> b( gen );
+    ztree<NODES> a( gen );
+    ztree<NODES> b( gen );
     ptree<int> aa( a ), aaa( a ), aaaa( a );
     ptree<int> bb( b ), bbb( b ), bbbb( b );
 
