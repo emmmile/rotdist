@@ -12,22 +12,32 @@ def statistics ( f ):
     num += 1
     if num == 1:
       continue
-    (opt, alg, mix, cen), rest = l.split()[2:6], l.split()[6:]
+    #if num == 500:
+    #  break
+    fields = l.split()
+    if len(fields) < 5:
+      continue
+    
+    opt = fields[2]
+    alg = fields[3]
+    cen = fields[4]
+    
     sopt += int( opt )
     vopt += int( opt ) * int( opt )
     salg += int( alg )
     valg += int( alg ) * int( alg )
-    smix += int( mix )
-    vmix += int( mix ) * int( mix )
+    #smix += int( mix )
+    #vmix += int( mix ) * int( mix )
     scen += int( cen )
     vcen += int( cen ) * int( cen )
 
+  
   print( f )  
   print( "algo\tavg\tvar" )
-  print( "opt\t{0:.2f}\t{1:.2f}".format( sopt / float( num ), math.sqrt( vopt / float( num ) - ( sopt / float( num ) ) ** 2 ) ) )
-  print( "new\t{0:.2f}\t{1:.2f}".format( salg / float( num ), math.sqrt( valg / float( num ) - ( salg / float( num ) ) ** 2 ) ) )
-  print( "mix\t{0:.2f}\t{1:.2f}".format( smix / float( num ), math.sqrt( vmix / float( num ) - ( smix / float( num ) ) ** 2 ) ) )
-  print( "cen\t{0:.2f}\t{1:.2f}".format( scen / float( num ), math.sqrt( vcen / float( num ) - ( scen / float( num ) ) ** 2 ) ) )
+  print( "opt\t{0:.3f}\t{1:.3f}".format( sopt / float( num ), math.sqrt( vopt / float( num ) - ( sopt / float( num ) ) ** 2 ) ) )
+  print( "new\t{0:.3f}\t{1:.3f}".format( salg / float( num ), math.sqrt( valg / float( num ) - ( salg / float( num ) ) ** 2 ) ) )
+  #print( "mix\t{0:.3f}\t{1:.3f}".format( smix / float( num ), math.sqrt( vmix / float( num ) - ( smix / float( num ) ) ** 2 ) ) )
+  print( "cen\t{0:.3f}\t{1:.3f}".format( scen / float( num ), math.sqrt( vcen / float( num ) - ( scen / float( num ) ) ** 2 ) ) )
     
 
 if __name__ == '__main__':
