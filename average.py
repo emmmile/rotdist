@@ -30,7 +30,7 @@ def statistics ( f ):
     scen += int( cen )
     vcen += int( cen ) * int( cen )      
     
-    if num >= 100:
+    if num >= 1000:
       break
 
   
