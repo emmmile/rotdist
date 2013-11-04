@@ -1,14 +1,14 @@
 #!/bin/bash
 
 
-for i in {11..18}
+for i in {11..50}
 do 
 
-  #g++ -DN=$i -o main.o -c -Wall -O3 -pipe -funroll-loops -std=c++0x -Irandom main.cpp
-  #g++ -o main main.o -lpthread
+  g++ -DNODES=$i -o main.o -c -Wall -O3 -pipe -funroll-loops -std=c++0x -Irandom main.cpp
+  g++ -o main main.o -lpthread
   
-  #./main 4 1000 > $i.txt
-  ./average.py results/$i.txt >> results.txt
+  ./main 1 500 > $i.txt
+  ./average.py $i.txt >> results.txt
 done
 
 

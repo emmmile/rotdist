@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-
+# http://stackoverflow.com/questions/7551219/deleting-columns-from-a-file-with-awk-or-from-command-line-on-linux
 import sys
 import math
 
@@ -9,15 +9,14 @@ def statistics ( f ):
   sopt = vopt = salg = valg = smix = vmix = scen = vcen = 0
   num = 0
   for l in open( f ):
-    num += 1
-    if num == 1:
-      continue
-    #if num == 500:
-    #  break
-    fields = l.split()
-    if len(fields) < 5:
+    if l.startswith( "first" ) or len( l ) < 2:
       continue
     
+    num += 1
+      
+    #print( l.strip() )    
+    
+    fields = l.split()    
     opt = fields[2]
     alg = fields[3]
     cen = fields[4]
@@ -29,7 +28,10 @@ def statistics ( f ):
     #smix += int( mix )
     #vmix += int( mix ) * int( mix )
     scen += int( cen )
-    vcen += int( cen ) * int( cen )
+    vcen += int( cen ) * int( cen )      
+    
+    if num >= 100:
+      break
 
   
   print( f )  

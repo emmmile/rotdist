@@ -1,0 +1,40 @@
+results/11.txt
+algo	avg	var
+opt	11.700	1.078
+new	11.736	1.125
+cen	13.954	0.976
+results/12.txt
+algo	avg	var
+opt	13.122	1.193
+new	13.188	1.282
+cen	15.734	1.077
+results/13.txt
+algo	avg	var
+opt	14.398	1.246
+new	14.532	1.397
+cen	17.488	1.080
+results/14.txt
+algo	avg	var
+opt	15.668	1.366
+new	15.818	1.531
+cen	19.240	1.106
+results/15.txt
+algo	avg	var
+opt	17.040	1.457
+new	17.244	1.661
+cen	21.032	1.131
+results/16.txt
+algo	avg	var
+opt	18.302	1.490
+new	18.482	1.641
+cen	22.738	1.212
+results/17.txt
+algo	avg	var
+opt	19.616	1.593
+new	19.846	1.788
+cen	24.640	1.172
+results/18.txt
+algo	avg	var
+opt	20.882	1.652
+new	21.134	1.861
+cen	26.470	1.175
