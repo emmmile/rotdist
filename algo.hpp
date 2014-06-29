@@ -5,6 +5,7 @@
 #include "equivalence.hpp"
 #include "ztree.hpp"
 #include "khash.hh"
+#include <vector>
 
 //#include <google/sparse_hash_set>
 using namespace std;
@@ -146,9 +147,12 @@ T newalgo_r ( ptree<T>& a, ptree<T>& b, equivalence_info<T>& eqinfo ) {
 
   T total = 0;
   a.equal_subtrees( b, eqinfo );              // aggiorno gli intervalli
-  total += k_equivalent(a, b, 1, eqinfo);        // stacco nodi k-equivalenti
+  print<T>(a, b, eqinfo);
+  total += k_equivalent(a, b, 1, eqinfo);     // stacco nodi k-equivalenti
   a.equal_subtrees( b, eqinfo );              // riaggiorno
 
+  print<T>(a, b, eqinfo);
+  cout << "=======================================================================\n";
   total += centralfirststep( a, b, eqinfo );  // porto un nodo a radice
   a.equal_subtrees( b, eqinfo );              // riaggiorno (in particolare i figli)
 

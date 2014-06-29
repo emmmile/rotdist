@@ -63,7 +63,10 @@ int main ( int argv, char** argc ) {
   return 0;*/
 
 
-  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) {
+      cout << "USAGE: " << argc[0] << " threads runs\n";
+      return 1;
+  }
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 

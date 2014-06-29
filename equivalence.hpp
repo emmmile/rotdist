@@ -2,6 +2,8 @@
 #define EQUIVALENCE_HPP
 #include <iostream>
 using namespace std;
+typedef unsigned int uint;
+
 namespace tree {
 
 
