@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include "node.hpp"
 #include <bitset>
-#include "random.hpp"
+#include "random.h"
 using namespace std;
 using namespace tree;
 
