@@ -1,6 +1,7 @@
 
 env = Environment(
-  CCFLAGS = ['-Wall', '-O3', '-pipe', '-funroll-loops', '-std=c++11'],
+  CC = 'g++-49',
+  CCFLAGS = ['-Wall', '-O3', '-pipe', '-funroll-loops', '-std=c++11', '-mtune=native', '-ffast-math'],
   LIBS=['pthread'],
   LIBPATH=[],
   CPPDEFINES=[],

@@ -9,3 +9,7 @@ config.hpp
 random/random.hpp
 khash.hh
 algo.hpp
+average.py
+tests.sh
+main.cpp
+print.hpp

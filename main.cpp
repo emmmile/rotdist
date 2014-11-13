@@ -25,26 +25,24 @@ void test_algorithms ( size_t runs, int index ) {
 
 
   for (i = 0; i < runs; ++i ) {
-    ztree<N> a( gen );
-    ztree<N> b( gen );
-    ptree<int> aa( a ), aaa( a ), aaaa( a );
-    ptree<int> bb( b ), bbb( b ), bbbb( b );
+    ztree<NODES> a( gen );
+    ztree<NODES> b( gen );
+    ptree<int> aa( a ), aaa( a );
+    ptree<int> bb( b ), bbb( b );
 
     if ( has_equivalent(aa,bb) ) { --i; continue; } // only very bad trees
 
     size_t visited;
-    int toptimal, tdistance, tcentral, tnewbetter;
-    toptimal = distance( a, b, visited );
+    int toptimal, tdistance, tcentral;
+    toptimal = 0; //distance( a, b, visited );
     tdistance = newalgo( aa, bb );
     tcentral = central( aaa, bbb );
-    tnewbetter = mix( aaaa, bbbb );
 
     assert( aa == bb );
     assert( aaa == bbb );
-    assert( aaaa == bbbb );
 
     output_mutex.lock();
-    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tnewbetter << "\t" << tcentral << "\t" << visited << endl;
+    cout << a << "\t" << b << "\t" << toptimal << "\t" << tdistance << "\t" << tcentral << "\t" << visited << endl;
     output_mutex.unlock();
   }
 }
@@ -65,7 +63,10 @@ int main ( int argv, char** argc ) {
   return 0;*/
 
 
-  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) return 1;
+  if ( argv != 3 || atoi( argc[1] ) <= 0 || atoi( argc[2] ) <= 0 ) {
+      cout << "USAGE: " << argc[0] << " threads runs\n";
+      return 1;
+  }
   size_t threads = atoi( argc[1] );
   size_t runs = atoi( argc[2] );
 
