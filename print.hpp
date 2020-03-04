@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include "node.hpp"
 #include "ptree.hpp"
 #include "equivalence.hpp"
