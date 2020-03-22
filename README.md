@@ -16,5 +16,7 @@ brew install scons
 Then:
 
 ```bash
+git submodule init
+git submodule update
 scons
 ```
